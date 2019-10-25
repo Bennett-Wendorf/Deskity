@@ -14,8 +14,8 @@ class RaspiDeskStatsApp(App):
     def build(self):
         mainBoxLayout = BoxLayout(orientation='horizontal')
         leftBoxLayout = BoxLayout(orientation='vertical')
-        appLauncher = BoxLayout(orientation='horizontal')
-        appLauncher.add_widget(CheckBox(pos=(50,150)))
+        appLauncher = CheckBox()
+        #appLauncher.add_widget(CheckBox())
         leftBoxLayout.add_widget(appLauncher)
         leftBoxLayout.add_widget(Button(text="App Location Placeholder"))
         toDo = Label(text="To Do List Placeholder")
