@@ -7,3 +7,10 @@ A small app that uses python and Kivy. Syncs with Microsoft ToDo as well as gmai
 - Pip: requests_oauthlib
 - Pip: pyyaml
 - Pip: python-dateutil
+- Pip: docutils
+- Pip: pygments
+- Pip: pypiwin32 
+- Pip: kivy_deps.sdl2
+- Pip: kivy_deps.glew
+- Pip: kivy_deps.gstreamer (For audio and video if needed)
+- Pip: kivy
