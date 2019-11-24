@@ -14,3 +14,4 @@ A small app that uses python and Kivy. Syncs with Microsoft ToDo as well as gmai
 - Pip: kivy_deps.glew
 - Pip: kivy_deps.gstreamer (For audio and video if needed)
 - Pip: kivy
+- Pip: msal
