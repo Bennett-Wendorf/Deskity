@@ -1,12 +1,26 @@
-<Main>:
-    orientation: "horizontal"
-    BoxLayout:  
-        orientation: "vertical"
-        BoxLayout:
-            orientation: "horizontal"
-            CheckBox:
+<Screen_Manager>:
+    MainScreen:
+        id: main_screen
+    SettingsScreen:
 
+<MainScreen>:
+    name: 'main'
+    BoxLayout:
+        orientation: "horizontal"
+        BoxLayout:  
+            orientation: "vertical"
+            BoxLayout:
+                orientation: "horizontal"
+                CheckBox:
+
+            Button:
+                text: "App Location Placeholder"
+        Label:
+            text: "To Do List Placeholder"
+
+<SettingsScreen>:
+    name: 'settings'
+    BoxLayout:
         Button:
-            text: "App Location Placeholder"
-    Label:
-        text: "To Do List Placeholder"
+            text: 'GoTo Main'
+            on_press: root.manager.switchToMain()
