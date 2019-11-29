@@ -27,4 +27,4 @@ if accounts:
 
 if not result:
     # No suitable token exists in cache. Let's get a new one from AAD.
-    result = app.acquire_token_by_authorization_code(, scopes=settings["scopes"])
+    result = app.acquire_token_by_authorization_code('auth code', scopes=settings["scopes"])
