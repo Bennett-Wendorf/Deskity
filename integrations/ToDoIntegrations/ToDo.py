@@ -5,10 +5,19 @@ import os
 import webbrowser
 import http.server
 import threading
+from urllib.parse import urlparse, parse_qs
 
-#class RequestHandler(BaseHTTPRequestHandler):
- #   def do_GET(self):
+authorization_response = None
+webServerThread = None
 
+class RequestHandler(http.server.BaseHTTPRequestHandler):
+    def do_GET(self):
+        query_components = parse_qs(urlparse(self.path).query)
+        code = str(query_components['code'])
+        print("Query compnents are:", query_components)
+        refinedCode = code[2:len(code)-2]
+        print("Refined code is:", refinedCode)
+        authorization_response = refinedCode
 
 
 def aquireAuthCode(settings):
@@ -21,10 +30,12 @@ def aquireAuthCode(settings):
     webServerThread.start()
     print("Sign in URL:", sign_in_url)
     webbrowser.open(sign_in_url, new=1, autoraise=True)
-    authorization_response = input('Enter the auth code: ')
+    while(not authorization_response):
+        pass
+    #authorization_response = input('Enter the auth code: ')s
     return authorization_response
 
-def RunLocalhostServer(server_class=http.server.HTTPServer, handler_class=http.server.BaseHTTPRequestHandler):
+def RunLocalhostServer(server_class=http.server.HTTPServer, handler_class=RequestHandler):
     server_address = ('127.0.0.1', 80)
     httpd = server_class(server_address, handler_class)
     httpd.serve_forever()
