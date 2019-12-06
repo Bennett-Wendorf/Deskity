@@ -6,33 +6,38 @@ import webbrowser
 import http.server
 import threading
 from urllib.parse import urlparse, parse_qs
+from time import sleep
 
 authorization_response = None
 webServerThread = None
 
 class RequestHandler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
+        global authorization_response
         query_components = parse_qs(urlparse(self.path).query)
         code = str(query_components['code'])
         print("Query compnents are:", query_components)
         refinedCode = code[2:len(code)-2]
-        print("Refined code is:", refinedCode)
         authorization_response = refinedCode
+        print("Authorization response is:", authorization_response)
 
 
 def aquireAuthCode(settings):
+    global authorization_response
     authorize_url = '{0}{1}'.format(settings['authority'], settings['authorize_endpoint'])
     print("Authorize URL:", authorize_url)
-    aadAuth = OAuth2Session(settings['app_id'], scope=settings['scopes'])#, redirect_uri=settings['redirect_uri'])
+    aadAuth = OAuth2Session(settings['app_id'], scope=settings['scopes'], redirect_uri=settings['redirect_uri'])
     sign_in_url, state = aadAuth.authorization_url(authorize_url, prompt='login')
     webServerThread = threading.Thread(target=RunLocalhostServer)
     webServerThread.setDaemon(True)
     webServerThread.start()
     print("Sign in URL:", sign_in_url)
     webbrowser.open(sign_in_url, new=1, autoraise=True)
-    while(not authorization_response):
+    while(authorization_response == None):
+        #print("In loop checking for auth response.")
+        #print("Auth response is:", authorization_response)
+        #sleep(1)
         pass
-    #authorization_response = input('Enter the auth code: ')s
     return authorization_response
 
 def RunLocalhostServer(server_class=http.server.HTTPServer, handler_class=RequestHandler):
@@ -66,5 +71,10 @@ if __name__ == '__main__':
     if not result:
         authCode = aquireAuthCode(settings)
         # No suitable token exists in cache. Let's get a new one from AAD.
-        result = app.acquire_token_by_authorization_code(authCode, scopes=settings["scopes"])
+        scopes = settings["scopes"].split()
+        print("Scope type from yml is:", type(scopes))
+        print("Scopes from yml are:", scopes)
+        result = app.acquire_token_by_authorization_code(authCode, scopes=scopes)
         print("Token:", result)
+        print("Result is:", type(result))
+        print("Access token is:", result['access_token'])
