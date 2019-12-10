@@ -19,44 +19,10 @@ class RequestHandler(http.server.BaseHTTPRequestHandler):
         query_components = parse_qs(urlparse(self.path).query)
         code = str(query_components['code'])
         print("Query compnents are:", query_components)
-        refinedCode = code[2:len(code)-2]
-        authorization_response = refinedCode
+        authorization_response = code[2:len(code)-2]
         print("Authorization response is:", authorization_response)
 
-# Aquire msal auth code from Microsoft
-def aquireAuthCode(settings):
-    global authorization_response
-    # Begin localhost web server in a new thread to handle the get request that will come from Microsoft
-    webServerThread = threading.Thread(target=RunLocalhostServer)
-    webServerThread.setDaemon(True)
-    webServerThread.start()
-    # Builds url from yml variables
-    authorize_url = '{0}{1}'.format(settings['authority'], settings['authorize_endpoint'])
-    print("Authorize URL:", authorize_url)
-    # Begins OAuth session with app_id, scopes, and redirect_uri from yml
-    aadAuth = OAuth2Session(settings['app_id'], scope=settings['scopes'], redirect_uri=settings['redirect_uri'])
-    # Obtain final login url from the OAuth session
-    sign_in_url, state = aadAuth.authorization_url(authorize_url, prompt='login')
-    print("Sign in URL:", sign_in_url)
-    # Opens a web browser with the new sign in url
-    webbrowser.open(sign_in_url, new=1, autoraise=True)
-    # Waits here until the web server receives an authorization_response
-    while(authorization_response == None):
-        pass
-    # This function returns the global authorization_response when it is not equal to None
-    return authorization_response
-
-# Starts a basic web server on the localhost http port
-def RunLocalhostServer(server_class=http.server.HTTPServer, handler_class=RequestHandler):
-    server_address = ('127.0.0.1', 80)
-    httpd = server_class(server_address, handler_class)
-    httpd.serve_forever()
-
-if __name__ == '__main__':
-    # This is necessary because Azure does not guarantee
-    # to return scopes in the same case and order as requested
-    os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
-    os.environ['OAUTHLIB_IGNORE_SCOPE_CHANGE'] = '1'
+class ToDoIntegration():
 
     # Load the authentication_settings.yml file
     # Note: this file is not tracked by github, so it will need to be created before running
@@ -65,25 +31,65 @@ if __name__ == '__main__':
 
     app = PublicClientApplication(settings['app_id'], authority=settings["authority"])
 
-    result = None
+    access_token = None
     accounts = app.get_accounts()
-    if accounts:
-        print("Pick the account you would like to use to proceed:")
-        for a in accounts:
-            print(a["username"])
-        #assuming the user selected the first one
-        chosen = accounts[0]
-        result = app.acquire_token_silent(settings["scopes"], account=chosen)
 
-    if not result:
-        # Get auth code
-        authCode = aquireAuthCode(settings)
-        # No suitable token exists in cache. Let's get a new one from AAD.
+    def __init__(self):
+        # This is necessary because Azure does not guarantee
+        # to return scopes in the same case and order as requested
+        os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
+        os.environ['OAUTHLIB_IGNORE_SCOPE_CHANGE'] = '1'
 
-        # Obtain scopes from yml and split them into a list format
-        scopes = settings["scopes"].split()
-        # Aquire token from Microsoft with auth code and scopes from above
-        result = app.acquire_token_by_authorization_code(authCode, scopes=scopes)
-        # Strip down the result and convert it to a string to get the final access token
-        access_token = str(result['access_token'])
-        print("Access token is:", access_token)
+    # Gets access token however it is needed and returns that token
+    def AquireAccessToken(self):
+        if(self.access_token == None):
+            if accounts:
+                print("Pick the account you would like to use to proceed:")
+                for a in self.accounts:
+                    print(a["username"])
+                #assuming the user selected the first one
+                chosen = self.accounts[0]
+                result = app.acquire_token_silent(settings["scopes"], account=chosen)
+
+            if not result:
+                # Get auth code
+                authCode = aquireAuthCode(settings)
+                # No suitable token exists in cache. Let's get a new one from AAD.
+
+                # Obtain scopes from yml and split them into a list format
+                scopes = settings["scopes"].split()
+                # Aquire token from Microsoft with auth code and scopes from above
+                result = app.acquire_token_by_authorization_code(authCode, scopes=scopes)
+                # Strip down the result and convert it to a string to get the final access token
+                self.access_token = str(result['access_token'])
+                print("Access token is:", access_token)
+        return access_token
+    
+    # Starts a basic web server on the localhost http port
+    def RunLocalhostServer(self, server_class=http.server.HTTPServer, handler_class=RequestHandler):
+        server_address = ('127.0.0.1', 80)
+        httpd = server_class(server_address, handler_class)
+        httpd.serve_forever()
+
+    # Aquire msal auth code from Microsoft
+    def aquireAuthCode(self, settings):
+        global authorization_response
+        # Begin localhost web server in a new thread to handle the get request that will come from Microsoft
+        webServerThread = threading.Thread(target=RunLocalhostServer)
+        webServerThread.setDaemon(True)
+        webServerThread.start()
+        # Builds url from yml variables
+        authorize_url = '{0}{1}'.format(settings['authority'], settings['authorize_endpoint'])
+        print("Authorize URL:", authorize_url)
+        # Begins OAuth session with app_id, scopes, and redirect_uri from yml
+        aadAuth = OAuth2Session(settings['app_id'], scope=settings['scopes'], redirect_uri=settings['redirect_uri'])
+        # Obtain final login url from the OAuth session
+        sign_in_url, state = aadAuth.authorization_url(authorize_url, prompt='login')
+        print("Sign in URL:", sign_in_url)
+        # Opens a web browser with the new sign in url
+        webbrowser.open(sign_in_url, new=1, autoraise=True)
+        # Waits here until the web server receives an authorization_response
+        while(authorization_response == None):
+            pass
+        # This function returns the global authorization_response when it is not equal to None
+        return authorization_response
