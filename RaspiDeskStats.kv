@@ -2,9 +2,10 @@
     MainScreen:
         id: main_screen
     SettingsScreen:
+        id: settings_screen
 
 <MainScreen>:
-    name: 'main'
+    name: 'main_screen'
     BoxLayout:
         orientation: "horizontal"
         BoxLayout:
@@ -15,11 +16,14 @@
 
             Button:
                 text: "App Location Placeholder"
-        Label:
-            text: "To Do List Placeholder"
+        ToDoWidget:
+            id: to_do_widget
+            name: 'to_do_widget'
+            Button:
+                text: "Test"
 
 <SettingsScreen>:
-    name: 'settings'
+    name: 'settings_screen'
     BoxLayout:
         Button:
             text: 'GoTo Main'
