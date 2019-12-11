@@ -8,14 +8,21 @@ from kivy.uix.checkbox import CheckBox
 from kivy.config import Config
 from kivy.core.window import Window
 from kivy.uix.screenmanager import ScreenManager, Screen
+from integrations.ToDoIntegrations.ToDo import ToDoIntegration
 
 Config.set('graphics', 'width', '480')
 Config.set('graphics', 'height', '320')
 Window.size=(480,320)
 
-class ToDoWidget(Widget):
-    def on_touch_down(self, touch):
-        print(touch)
+class ToDoWidget(BoxLayout):
+    integration = ToDoIntegration()
+    #def __init__(self):
+    #    super().__init__()
+    #    integration = ToDoIntegration()
+
+    def get_access_code(self):
+        code = self.integration.AquireAccessToken()
+        print("Access code is:", code)
 
 class MainScreen(Screen):
     pass        
@@ -25,8 +32,9 @@ class SettingsScreen(Screen):
 
 class Screen_Manager(ScreenManager):
     def __init__(self, **kwargs):
-        super(Screen_Manager, self).__init__(**kwargs)
-        Window.bind(on_key_down=self.on_key_press)
+        #super(Screen_Manager, self).__init__(**kwargs)
+        super().__init__()
+        Window.bind(on_key_down = self.on_key_press)
         #self.current = 'main'
     
     def on_key_press(self, *args):
@@ -34,17 +42,17 @@ class Screen_Manager(ScreenManager):
         print ("Got key event. Key pressed was: ", keyPressed)
         if(keyPressed == 's'):
             self.switchToSettings()
-        elif(keyPressed == 'h'):
+        elif(keyPressed == 'm'):
             self.switchToMain()
 
     def switchToMain(self):
         self.transition.direction = 'up'
-        self.current = 'main'
-        print("Attempting switchToSettings()")
+        self.current = 'main_screen'
+        print("Attempting switchToMain()")
     
     def switchToSettings(self):
         self.transition.direction = 'down'
-        self.current = 'settings'
+        self.current = 'settings_screen'
         print("Attempting switchToSettings()")
 
 class RaspiDeskStatsApp(App):

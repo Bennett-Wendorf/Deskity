@@ -19,8 +19,10 @@
         ToDoWidget:
             id: to_do_widget
             name: 'to_do_widget'
+            orientation: 'vertical'
             Button:
                 text: "Test"
+                on_press: to_do_widget.get_access_code()
 
 <SettingsScreen>:
     name: 'settings_screen'

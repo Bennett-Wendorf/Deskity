@@ -1,5 +1,5 @@
 #Yaml file that contains sensative authentication information for integrations
-authentication_settings.yml
+*_authentication_settings.yml
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -18,7 +18,7 @@ class RequestHandler(http.server.BaseHTTPRequestHandler):
         global authorization_response
         query_components = parse_qs(urlparse(self.path).query)
         code = str(query_components['code'])
-        print("Query compnents are:", query_components)
+        print("Query components are:", query_components)
         authorization_response = code[2:len(code)-2]
         print("Authorization response is:", authorization_response)
 
@@ -26,12 +26,13 @@ class ToDoIntegration():
 
     # Load the authentication_settings.yml file
     # Note: this file is not tracked by github, so it will need to be created before running
-    stream = open('../../authentication_settings.yml', 'r')
+    stream = open('integrations/ToDoIntegrations/microsoft_authentication_settings.yml', 'r')
     settings = yaml.load(stream, yaml.SafeLoader)
 
     app = PublicClientApplication(settings['app_id'], authority=settings["authority"])
 
     access_token = None
+    result = None
     accounts = app.get_accounts()
 
     def __init__(self):
@@ -43,27 +44,27 @@ class ToDoIntegration():
     # Gets access token however it is needed and returns that token
     def AquireAccessToken(self):
         if(self.access_token == None):
-            if accounts:
+            if self.accounts:
                 print("Pick the account you would like to use to proceed:")
                 for a in self.accounts:
                     print(a["username"])
                 #assuming the user selected the first one
                 chosen = self.accounts[0]
-                result = app.acquire_token_silent(settings["scopes"], account=chosen)
+                self.result = self.app.acquire_token_silent(self.settings["scopes"], account=chosen)
 
-            if not result:
+            if (self.result == None):
                 # Get auth code
-                authCode = aquireAuthCode(settings)
+                authCode = self.aquireAuthCode(self.settings)
                 # No suitable token exists in cache. Let's get a new one from AAD.
 
                 # Obtain scopes from yml and split them into a list format
-                scopes = settings["scopes"].split()
+                scopes = self.settings["scopes"].split()
                 # Aquire token from Microsoft with auth code and scopes from above
-                result = app.acquire_token_by_authorization_code(authCode, scopes=scopes)
+                self.result = self.app.acquire_token_by_authorization_code(authCode, scopes=scopes)
                 # Strip down the result and convert it to a string to get the final access token
-                self.access_token = str(result['access_token'])
-                print("Access token is:", access_token)
-        return access_token
+                self.access_token = str(self.result['access_token'])
+                print("Access token is:", self.access_token)
+        return self.access_token
     
     # Starts a basic web server on the localhost http port
     def RunLocalhostServer(self, server_class=http.server.HTTPServer, handler_class=RequestHandler):
@@ -75,7 +76,7 @@ class ToDoIntegration():
     def aquireAuthCode(self, settings):
         global authorization_response
         # Begin localhost web server in a new thread to handle the get request that will come from Microsoft
-        webServerThread = threading.Thread(target=RunLocalhostServer)
+        webServerThread = threading.Thread(target=self.RunLocalhostServer)
         webServerThread.setDaemon(True)
         webServerThread.start()
         # Builds url from yml variables
