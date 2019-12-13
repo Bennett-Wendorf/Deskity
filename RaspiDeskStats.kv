@@ -17,7 +17,7 @@
                 name: 'to_do_widget'
                 orientation: 'vertical'
                 Label:
-                    text: "Test"
+                    text: "To Do Placeholder"
     SettingsScreen:
         id: settings_screen
         name: 'settings_screen'
@@ -25,7 +25,7 @@
             Button:
                 id: back_button
                 text: 'Back'
-                on_press: root.manager.switchToMain()
+                on_press: root.switchToMain()
                 pos_hint: {'center_x': 0.085, 'center_y': 0.085}
                 size_hint: (.15,.15)
             Label:
@@ -36,4 +36,4 @@
                 text: "Sign In"
                 pos_hint: {'center_x': .5, 'center_y': .5}
                 size_hint: (.2,.1)
-                #on_press: root.main_screen.to_do_widget.get_access_code()
+                on_press: root.ids.to_do_widget.get_access_code()

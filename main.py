@@ -16,13 +16,14 @@ Window.size=(480,320)
 
 class ToDoWidget(BoxLayout):
     integration = ToDoIntegration()
+    code = None
     #def __init__(self):
     #    super().__init__()
     #    integration = ToDoIntegration()
 
     def get_access_code(self):
-        code = self.integration.AquireAccessToken()
-        print("Access code is:", code)
+        self.code = self.integration.AquireAccessToken()
+        print("Access code is:", self.code)
 
 class MainScreen(Screen):
     pass        
