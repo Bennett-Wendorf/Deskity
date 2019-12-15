@@ -16,14 +16,26 @@ Window.size=(480,320)
 
 class ToDoWidget(BoxLayout):
     integration = ToDoIntegration()
-    code = None
+    token = None
+    sign_in_label_text = "Sign in to Microsoft"
+    tasks = None
     #def __init__(self):
     #    super().__init__()
     #    integration = ToDoIntegration()
 
     def get_access_code(self):
-        self.code = self.integration.AquireAccessToken()
-        print("Access code is:", self.code)
+        self.token = self.integration.Aquire_Access_Token()
+        print("Access token is:", self.token)
+        if(self.token != None):
+            print("About to change sign in label text")
+            sign_in_label_text = "You are signed in to Microsoft"
+            #self.ids.microsoft_sign_in.disabled = True
+            self.Aquire_Task_Info()
+
+    def Aquire_Task_Info(self):
+        self.tasks = self.integration.Get_Tasks(self.token)
+        print(self.tasks)
+        print(type(self.tasks))
 
 class MainScreen(Screen):
     pass        

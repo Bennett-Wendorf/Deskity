@@ -7,6 +7,8 @@ import http.server
 import threading
 from urllib.parse import urlparse, parse_qs
 from time import sleep
+import requests
+import json
 
 authorization_response = None
 webServerThread = None
@@ -42,7 +44,7 @@ class ToDoIntegration():
         os.environ['OAUTHLIB_IGNORE_SCOPE_CHANGE'] = '1'
 
     # Gets access token however it is needed and returns that token
-    def AquireAccessToken(self):
+    def Aquire_Access_Token(self):
         if(self.access_token == None):
             if self.accounts:
                 print("Pick the account you would like to use to proceed:")
@@ -54,7 +56,7 @@ class ToDoIntegration():
 
             if (self.result == None):
                 # Get auth code
-                authCode = self.aquireAuthCode(self.settings)
+                authCode = self.Aquire_Auth_Code(self.settings)
                 # No suitable token exists in cache. Let's get a new one from AAD.
 
                 # Obtain scopes from yml and split them into a list format
@@ -67,16 +69,16 @@ class ToDoIntegration():
         return self.access_token
     
     # Starts a basic web server on the localhost http port
-    def RunLocalhostServer(self, server_class=http.server.HTTPServer, handler_class=RequestHandler):
+    def Run_Localhost_Server(self, server_class=http.server.HTTPServer, handler_class=RequestHandler):
         server_address = ('127.0.0.1', 80)
         httpd = server_class(server_address, handler_class)
         httpd.serve_forever()
 
     # Aquire msal auth code from Microsoft
-    def aquireAuthCode(self, settings):
+    def Aquire_Auth_Code(self, settings):
         global authorization_response
         # Begin localhost web server in a new thread to handle the get request that will come from Microsoft
-        webServerThread = threading.Thread(target=self.RunLocalhostServer)
+        webServerThread = threading.Thread(target=self.Run_Localhost_Server)
         webServerThread.setDaemon(True)
         webServerThread.start()
         # Builds url from yml variables
@@ -94,3 +96,18 @@ class ToDoIntegration():
             pass
         # This function returns the global authorization_response when it is not equal to None
         return authorization_response
+    
+    # Gets To Do Tasks from Microsoft
+    def Get_Tasks(self, token):
+        print("Token from Get_Tasks():", token)
+
+        endpoint = "https://graph.microsoft.com/beta/me/outlook/tasks"
+        headers = {'Content-Type':'application/json', 'Authorization':'Bearer {0}'.format(token)}
+
+        response = requests.get(endpoint,headers=headers)
+        print("Response is:", response)
+        print("Type of response is:", type(response))
+        print("Response status code is:", response.status_code)
+        if(response.status_code == 200):
+            json_data = json.loads(response.text)
+        print("JSON data is:", json_data)

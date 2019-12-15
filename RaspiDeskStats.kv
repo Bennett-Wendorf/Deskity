@@ -29,7 +29,8 @@
                 pos_hint: {'center_x': 0.085, 'center_y': 0.085}
                 size_hint: (.15,.15)
             Label:
-                text: "Sign in to Microsoft"
+                id: microsoft_sign_in_label
+                text: root.ids.to_do_widget.sign_in_label_text
                 pos_hint: {'center_x': .5, 'center_y': .6}
             Button:
                 id: microsoft_sign_in
