@@ -3,12 +3,13 @@ from kivy.uix.widget import Widget
 from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.relativelayout import RelativeLayout
 from kivy.uix.checkbox import CheckBox
 from kivy.config import Config
 from kivy.core.window import Window
 from kivy.uix.screenmanager import ScreenManager, Screen
 from integrations.ToDoIntegrations.ToDo import ToDoIntegration
+from kivy.properties import ObjectProperty
 
 Config.set('graphics', 'width', '480')
 Config.set('graphics', 'height', '320')
@@ -19,6 +20,7 @@ class ToDoWidget(BoxLayout):
     token = None
     sign_in_label_text = "Sign in to Microsoft"
     tasks = None
+    grid_layout = ObjectProperty() # Will want to stream line this eventually
     #def __init__(self):
     #    super().__init__()
     #    integration = ToDoIntegration()
@@ -34,11 +36,24 @@ class ToDoWidget(BoxLayout):
 
     def Aquire_Task_Info(self):
         self.tasks = self.integration.Get_Tasks(self.token)
-        print(self.tasks)
-        print(type(self.tasks))
+        self.Render_Tasks()
+
+    def Render_Tasks(self):
+        #This is how it should be able to work. Not sure why this doesn't
+        #grid_layout = self.ids['tasks_list']
+        print(self.grid_layout)
+        for task in self.tasks:
+            print("About to add", task['subject'], "to grid layout")
+            new_task_item = TaskItem(task)
+            self.grid_layout.add_widget(new_task_item)
+
+class TaskItem(RelativeLayout):
+    def __init__(self, task):
+        print(task)
+        print(type(task))
 
 class MainScreen(Screen):
-    pass        
+    pass       
 
 class SettingsScreen(Screen):
     pass
@@ -49,6 +64,7 @@ class Screen_Manager(ScreenManager):
         super().__init__()
         Window.bind(on_key_down = self.on_key_press)
         #self.current = 'main'
+        print("Screen Manager IDs are", self.ids)
     
     def on_key_press(self, *args):
         keyPressed = args[3]

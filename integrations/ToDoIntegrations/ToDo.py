@@ -110,4 +110,9 @@ class ToDoIntegration():
         print("Response status code is:", response.status_code)
         if(response.status_code == 200):
             json_data = json.loads(response.text)
-        print("JSON data is:", json_data)
+            print("JSON data is:", json_data)
+            return json_data['value']
+        else:
+            print("The response did not return a success code. Returning nothing.")
+            return None
+        
