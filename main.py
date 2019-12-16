@@ -48,9 +48,10 @@ class ToDoWidget(BoxLayout):
             self.grid_layout.add_widget(new_task_item)
 
 class TaskItem(RelativeLayout):
-    def __init__(self, task):
-        print(task)
-        print(type(task))
+    #def __init__(self, task):
+    #    print(task)
+    #    print(type(task))
+    pass
 
 class MainScreen(Screen):
     pass       
