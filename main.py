@@ -41,17 +41,18 @@ class ToDoWidget(BoxLayout):
     def Render_Tasks(self):
         #This is how it should be able to work. Not sure why this doesn't
         #grid_layout = self.ids['tasks_list']
-        print(self.grid_layout)
         for task in self.tasks:
             print("About to add", task['subject'], "to grid layout")
             new_task_item = TaskItem(task)
             self.grid_layout.add_widget(new_task_item)
 
 class TaskItem(RelativeLayout):
-    #def __init__(self, task):
-    #    print(task)
-    #    print(type(task))
-    pass
+    task = None
+    def __init__(self, task, **kwargs):
+        super(TaskItem, self).__init__(**kwargs)
+        self.task = task
+        print("Task Item IDs are:", self.ids)
+        print("Adding new task:", task['subject'])
 
 class MainScreen(Screen):
     pass       
