@@ -10,6 +10,7 @@ from kivy.core.window import Window
 from kivy.uix.screenmanager import ScreenManager, Screen
 from integrations.ToDoIntegrations.ToDo import ToDoIntegration
 from kivy.properties import ObjectProperty
+from kivy.properties import StringProperty
 
 Config.set('graphics', 'width', '480')
 Config.set('graphics', 'height', '320')
@@ -48,11 +49,14 @@ class ToDoWidget(BoxLayout):
 
 class TaskItem(RelativeLayout):
     task = None
+    task_name = StringProperty()
+    #taskName = ""
     def __init__(self, task, **kwargs):
         super(TaskItem, self).__init__(**kwargs)
         self.task = task
-        print("Task Item IDs are:", self.ids)
         print("Adding new task:", task['subject'])
+        self.task_name = self.task['subject']
+        print(self.task_name)
 
 class MainScreen(Screen):
     pass       
