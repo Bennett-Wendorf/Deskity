@@ -20,9 +20,7 @@ class RequestHandler(http.server.BaseHTTPRequestHandler):
         global authorization_response
         query_components = parse_qs(urlparse(self.path).query)
         code = str(query_components['code'])
-        print("Query components are:", query_components)
         authorization_response = code[2:len(code)-2]
-        print("Authorization response is:", authorization_response)
 
 class ToDoIntegration():
 
@@ -65,7 +63,6 @@ class ToDoIntegration():
                 self.result = self.app.acquire_token_by_authorization_code(authCode, scopes=scopes)
                 # Strip down the result and convert it to a string to get the final access token
                 self.access_token = str(self.result['access_token'])
-                print("Access token is:", self.access_token)
         return self.access_token
     
     # Starts a basic web server on the localhost http port
@@ -99,15 +96,11 @@ class ToDoIntegration():
     
     # Gets To Do Tasks from Microsoft
     def Get_Tasks(self, token):
-        print("Token from Get_Tasks():", token)
 
         endpoint = "https://graph.microsoft.com/beta/me/outlook/tasks"
         headers = {'Content-Type':'application/json', 'Authorization':'Bearer {0}'.format(token)}
 
         response = requests.get(endpoint,headers=headers)
-        print("Response is:", response)
-        print("Type of response is:", type(response))
-        print("Response status code is:", response.status_code)
         if(response.status_code == 200):
             json_data = json.loads(response.text)
             print("JSON data is:", json_data)

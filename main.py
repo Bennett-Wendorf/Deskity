@@ -28,9 +28,7 @@ class ToDoWidget(BoxLayout):
 
     def get_access_code(self):
         self.token = self.integration.Aquire_Access_Token()
-        print("Access token is:", self.token)
         if(self.token != None):
-            print("About to change sign in label text")
             sign_in_label_text = "You are signed in to Microsoft"
             #self.ids.microsoft_sign_in.disabled = True
             self.Aquire_Task_Info()
@@ -43,7 +41,6 @@ class ToDoWidget(BoxLayout):
         #This is how it should be able to work. Not sure why this doesn't
         #grid_layout = self.ids['tasks_list']
         for task in self.tasks:
-            print("About to add", task['subject'], "to grid layout")
             new_task_item = TaskItem(task)
             self.grid_layout.add_widget(new_task_item)
 
@@ -56,7 +53,6 @@ class TaskItem(RelativeLayout):
         self.task = task
         print("Adding new task:", task['subject'])
         self.task_name = self.task['subject']
-        print(self.task_name)
 
 class MainScreen(Screen):
     pass       
