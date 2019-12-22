@@ -19,11 +19,14 @@
                 name: 'to_do_widget'
                 orientation: 'vertical'
                 grid_layout: tasks_list
-                GridLayout:
-                    id: tasks_list
-                    cols: 1
-                    row_default_height: 30
-                    row_force_default: True
+                ScrollView:
+                    size: self.size
+                    GridLayout:
+                        id: tasks_list
+                        cols: 1
+                        row_default_height: 30
+                        row_force_default: True
+                        size_hint_y: None
     SettingsScreen:
         id: settings_screen
         name: 'settings_screen'

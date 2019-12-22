@@ -11,6 +11,7 @@ from kivy.uix.screenmanager import ScreenManager, Screen
 from integrations.ToDoIntegrations.ToDo import ToDoIntegration
 from kivy.properties import ObjectProperty
 from kivy.properties import StringProperty
+from kivy.base import runTouchApp
 
 Config.set('graphics', 'width', '480')
 Config.set('graphics', 'height', '320')
@@ -22,8 +23,10 @@ class ToDoWidget(BoxLayout):
     sign_in_label_text = "Sign in to Microsoft"
     tasks = None
     grid_layout = ObjectProperty() # Will want to stream line this eventually
-    #def __init__(self):
-    #    super().__init__()
+    def __init__(self, **kwargs):
+        super(ToDoWidget, self).__init__(**kwargs)
+        print("Grid_layout:", self.grid_layout)
+        #self.grid_layout.bind(minimum_height=self.grid_layout.setter('height'))
     #    integration = ToDoIntegration()
 
     def get_access_code(self):
@@ -88,7 +91,12 @@ class Screen_Manager(ScreenManager):
 
 class RaspiDeskStatsApp(App):
     def build(self):
-        return Screen_Manager()
+        manager = Screen_Manager()
+        grid_layout = manager.ids.tasks_list
+        grid_layout.bind(minimum_height=grid_layout.setter('height'))
+        return manager
 
 if __name__ == '__main__':
     RaspiDeskStatsApp().run()
+    #root = Screen_Manager()
+    #runTouchApp(root)
