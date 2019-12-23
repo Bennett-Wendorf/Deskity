@@ -27,7 +27,8 @@
                         row_default_height: 30
                         row_force_default: True
                         size_hint_y: None
-                        spacing: 0, 5
+                        spacing: 0, 10
+                        padding: 4
     SettingsScreen:
         id: settings_screen
         name: 'settings_screen'
@@ -55,8 +56,8 @@
         pos_hint: {'center_x': 0.05, 'center_y': 0.5}
         size_hint: (.1,.9)
     Label:
-        pos_hint: {'center_x': 0.55, 'center_y': 0.5}
-        size_hint: (.9,.9)
+        pos_hint: {'center_x': 0.57, 'center_y': 0.5}
+        size_hint: (.86,.9)
         text: root.task_name
         size_hint_y: None
         text_size: self.width, None
