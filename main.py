@@ -12,6 +12,7 @@ from integrations.ToDoIntegrations.ToDo import ToDoIntegration
 from kivy.properties import ObjectProperty
 from kivy.properties import StringProperty
 from kivy.base import runTouchApp
+import threading
 
 Config.set('graphics', 'width', '480')
 Config.set('graphics', 'height', '320')
@@ -19,6 +20,7 @@ Window.size=(480,320)
 
 class ToDoWidget(BoxLayout):
     integration = ToDoIntegration()
+    access_code_thread = None
     token = None
     sign_in_label_text = "Sign in to Microsoft"
     tasks = None
@@ -28,6 +30,11 @@ class ToDoWidget(BoxLayout):
         print("Grid_layout:", self.grid_layout)
         #self.grid_layout.bind(minimum_height=self.grid_layout.setter('height'))
     #    integration = ToDoIntegration()
+
+    def get_access_code_threaded(self):
+        access_code_thread = threading.Thread(target=self.get_access_code)
+        access_code_thread.setDaemon(True)
+        access_code_thread.start()
 
     def get_access_code(self):
         self.token = self.integration.Aquire_Access_Token()
