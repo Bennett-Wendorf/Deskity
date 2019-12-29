@@ -1,8 +1,9 @@
 #Yaml file that contains sensative authentication information for integrations
 *_authentication_settings.yml
 
-#VScode workspace
+#VScode
 *.code-workspace
+/.vscode
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
