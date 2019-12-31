@@ -27,7 +27,7 @@ class ToDoIntegration():
     # Load the authentication_settings.yml file
     # Note: this file is not tracked by github, so it will need to be created before running
     stream = open('integrations/ToDoIntegrations/microsoft_authentication_settings.yml', 'r')
-    settings = yaml.load(stream, yaml.SafeLoader)
+    settings = yaml.safe_load(stream)
 
     app = PublicClientApplication(settings['app_id'], authority=settings["authority"])
 
@@ -61,6 +61,7 @@ class ToDoIntegration():
                 scopes = self.settings["scopes"].split()
                 # Aquire token from Microsoft with auth code and scopes from above
                 self.result = self.app.acquire_token_by_authorization_code(authCode, scopes=scopes)
+                print("Result of aquiring token is:", self.result)
                 # Strip down the result and convert it to a string to get the final access token
                 self.access_token = str(self.result['access_token'])
         return self.access_token
@@ -74,6 +75,10 @@ class ToDoIntegration():
     # Aquire msal auth code from Microsoft
     def Aquire_Auth_Code(self, settings):
         global authorization_response
+        #if 'authorization_code' in self.settings:
+        #    print("Auth code was found, it is:", self.settings['authorization_code'])
+        #    authorization_response = self.settings['authorization_code']
+        #else:
         # Begin localhost web server in a new thread to handle the get request that will come from Microsoft
         webServerThread = threading.Thread(target=self.Run_Localhost_Server)
         webServerThread.setDaemon(True)
@@ -91,6 +96,11 @@ class ToDoIntegration():
         # Waits here until the web server receives an authorization_response
         while(authorization_response == None):
             pass
+        # Write the new auth code to mircosoft_authentication_settings.yml for later use
+        self.settings.update({'authorization_code':authorization_response})
+        with open('integrations/ToDoIntegrations/microsoft_authentication_settings.yml', 'w') as stream:
+            print("Dumping new settings to yml")
+            yaml.safe_dump(self.settings, stream)
         # This function returns the global authorization_response when it is not equal to None
         return authorization_response
     
