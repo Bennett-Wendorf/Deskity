@@ -75,8 +75,6 @@ class Screen_Manager(ScreenManager):
         #super(Screen_Manager, self).__init__(**kwargs)
         super().__init__()
         Window.bind(on_key_down = self.on_key_press)
-        #self.current = 'main'
-        print("Screen Manager IDs are", self.ids)
     
     def on_key_press(self, *args):
         keyPressed = args[3]

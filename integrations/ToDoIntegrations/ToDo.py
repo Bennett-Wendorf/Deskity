@@ -1,4 +1,5 @@
 from msal import PublicClientApplication
+from msal import SerializableTokenCache
 import yaml
 from requests_oauthlib import OAuth2Session
 import os
@@ -9,18 +10,23 @@ from urllib.parse import urlparse, parse_qs
 from time import sleep
 import requests
 import json
+import atexit
 
 authorization_response = None
 webServerThread = None
+cache = None
 
 # Request handler to parse url's get request and strip out authorization code as string. 
 # Sets the global authorization_response variable to this value.
-class RequestHandler(http.server.BaseHTTPRequestHandler):
+class RequestHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         global authorization_response
         query_components = parse_qs(urlparse(self.path).query)
         code = str(query_components['code'])
         authorization_response = code[2:len(code)-2]
+        if self.path == '/':
+            self.path = 'index.html'
+        return http.server.SimpleHTTPRequestHandler.do_GET(self)
 
 class ToDoIntegration():
 
@@ -29,17 +35,37 @@ class ToDoIntegration():
     stream = open('integrations/ToDoIntegrations/microsoft_authentication_settings.yml', 'r')
     settings = yaml.safe_load(stream)
 
-    app = PublicClientApplication(settings['app_id'], authority=settings["authority"])
+    app = None
 
     access_token = None
     result = None
-    accounts = app.get_accounts()
+    accounts = None
 
     def __init__(self):
         # This is necessary because Azure does not guarantee
         # to return scopes in the same case and order as requested
         os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
         os.environ['OAUTHLIB_IGNORE_SCOPE_CHANGE'] = '1'
+
+        global cache
+
+        cache_path = "integrations/ToDoIntegrations/microsoft_cache.bin"
+
+        cache = SerializableTokenCache()
+        if os.path.exists(cache_path):
+            cache.deserialize(open(cache_path, "r").read())
+            print("Reading token cache")
+        atexit.register(lambda:
+            open(cache_path, "w").write(cache.serialize())
+            # Hint: The following optional line persists only when state changed
+            if cache.has_state_changed else None
+            )
+        
+        self.app = PublicClientApplication(self.settings['app_id'], authority=self.settings["authority"], token_cache=cache)
+
+        self.accounts = self.app.get_accounts()
+
+        print("Accounts:", self.accounts)
 
     # Gets access token however it is needed and returns that token
     def Aquire_Access_Token(self):
@@ -50,12 +76,15 @@ class ToDoIntegration():
                     print(a["username"])
                 #assuming the user selected the first one
                 chosen = self.accounts[0]
-                self.result = self.app.acquire_token_silent(self.settings["scopes"], account=chosen)
+                print(chosen)
+                print(self.settings["scopes"])
+                self.result = self.app.acquire_token_silent_with_error(self.settings["scopes"], account=self.accounts[0])
 
             if (self.result == None):
                 # Get auth code
                 authCode = self.Aquire_Auth_Code(self.settings)
                 # No suitable token exists in cache. Let's get a new one from AAD.
+                print("Newly aquired auth code is:", authCode)
 
                 # Obtain scopes from yml and split them into a list format
                 scopes = self.settings["scopes"].split()
@@ -63,14 +92,14 @@ class ToDoIntegration():
                 self.result = self.app.acquire_token_by_authorization_code(authCode, scopes=scopes)
                 print("Result of aquiring token is:", self.result)
                 # Strip down the result and convert it to a string to get the final access token
-                self.access_token = str(self.result['access_token'])
+        self.access_token = str(self.result['access_token'])
         return self.access_token
     
     # Starts a basic web server on the localhost http port
     def Run_Localhost_Server(self, server_class=http.server.HTTPServer, handler_class=RequestHandler):
-        server_address = ('127.0.0.1', 80)
+        server_address = ('127.0.0.1', 1080)
         httpd = server_class(server_address, handler_class)
-        httpd.serve_forever()
+        httpd.handle_request()
 
     # Aquire msal auth code from Microsoft
     def Aquire_Auth_Code(self, settings):
