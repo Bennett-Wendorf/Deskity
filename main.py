@@ -99,6 +99,7 @@ class RaspiDeskStatsApp(App):
         manager = Screen_Manager()
         grid_layout = manager.ids.tasks_list
         grid_layout.bind(minimum_height=grid_layout.setter('height'))
+        manager.ids.to_do_widget.get_access_code_threaded()
         return manager
 
 if __name__ == '__main__':
