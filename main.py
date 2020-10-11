@@ -14,10 +14,12 @@ from kivy.properties import StringProperty
 from kivy.base import runTouchApp
 import threading
 
+# Set the default size of the window to 480x320, the size of my 3.5" touchscreen module for a Raspberry Pi
 Config.set('graphics', 'width', '480')
 Config.set('graphics', 'height', '320')
 Window.size=(480,320)
 
+# The widget that handles all transactions for the Microsoft To Do integration.
 class ToDoWidget(BoxLayout):
     integration = ToDoIntegration()
     access_code_thread = None
@@ -25,28 +27,35 @@ class ToDoWidget(BoxLayout):
     sign_in_label_text = "Sign in to Microsoft"
     tasks = None
     grid_layout = ObjectProperty() # Will want to stream line this eventually
+
     def __init__(self, **kwargs):
         super(ToDoWidget, self).__init__(**kwargs)
         print("Grid_layout:", self.grid_layout)
-        #self.grid_layout.bind(minimum_height=self.grid_layout.setter('height'))
-    #    integration = ToDoIntegration()
 
-    def get_access_code_threaded(self):
-        access_code_thread = threading.Thread(target=self.get_access_code)
+        # If an account exists in cache, get it now. If not, don't do anything and let user sign in on settings screen.
+        if(self.integration.app.get_accounts()):
+            self.Get_Access_Code_Threaded()
+
+    # Run Get_Access_Code() in a new thread
+    def Get_Access_Code_Threaded(self):
+        access_code_thread = threading.Thread(target=self.Get_Access_Code)
         access_code_thread.setDaemon(True)
         access_code_thread.start()
 
-    def get_access_code(self):
+    # Aquire a new access token or pull one from the cache. 
+    # Assuming one was found, pull new task info from the API
+    def Get_Access_Code(self):
         self.token = self.integration.Aquire_Access_Token()
         if(self.token != None):
-            sign_in_label_text = "You are signed in to Microsoft"
-            #self.ids.microsoft_sign_in.disabled = True
+            self.sign_in_label_text = "You are signed in to Microsoft"
             self.Aquire_Task_Info()
 
+    # Aquire task information from the To Do integration and render them on screen
     def Aquire_Task_Info(self):
         self.tasks = self.integration.Get_Tasks(self.token)
         self.Render_Tasks()
 
+    # For each task in the new list of tasks, instantiate a new task object and add the new object to the grid layout of tasks
     def Render_Tasks(self):
         #This is how it should be able to work. Not sure why this doesn't
         #grid_layout = self.ids['tasks_list']
@@ -54,6 +63,7 @@ class ToDoWidget(BoxLayout):
             new_task_item = TaskItem(task)
             self.grid_layout.add_widget(new_task_item)
 
+# A task item object. Holds info about the task it contains and sets up a layout with that information. Layout set up in raspideskstats.kv
 class TaskItem(RelativeLayout):
     task = None
     task_name = StringProperty()
@@ -64,44 +74,51 @@ class TaskItem(RelativeLayout):
         print("Adding new task:", task['subject'])
         self.task_name = self.task['subject']
 
+# A Main Screen object. Only one of these should be instantiated at a time. See raspideskstats.kv for layout.
 class MainScreen(Screen):
     pass       
 
+# A Settings Screen object. Only one of these should be instantiated at a time. See raspideskstats.kv for layout.
 class SettingsScreen(Screen):
     pass
 
+# A Screen Manager object. This is the root widget of the kivy hierarchy and handles switching between screens in app. See raspideskstats.kv for layout.
 class Screen_Manager(ScreenManager):
     def __init__(self, **kwargs):
         #super(Screen_Manager, self).__init__(**kwargs)
         super().__init__()
-        Window.bind(on_key_down = self.on_key_press)
+        Window.bind(on_key_down = self.On_Key_Press)
     
-    def on_key_press(self, *args):
-        keyPressed = args[3]
-        print ("Got key event. Key pressed was: ", keyPressed)
-        if(keyPressed == 's'):
-            self.switchToSettings()
-        elif(keyPressed == 'm'):
-            self.switchToMain()
+    # Handles key presses for switching to main and settings screens.
+    def On_Key_Press(self, *args):
+        key_pressed = args[3]
+        print ("Got key event. Key pressed was: ", key_pressed)
+        if(key_pressed == 's'):
+            self.Switch_To_Settings()
+        elif(key_pressed == 'm'):
+            self.Switch_To_Main()
 
-    def switchToMain(self):
-        self.transition.direction = 'up'
-        self.current = 'main_screen'
-        print("Attempting switchToMain()")
-    
-    def switchToSettings(self):
+    # Switch to main screen from any other screen.
+    def Switch_To_Main(self):
         self.transition.direction = 'down'
+        self.current = 'main_screen'
+        print("Attempting Switch_To_Main()")
+    
+    # Switch to settings screen from any other screen.
+    def Switch_To_Settings(self):
+        self.transition.direction = 'up'
         self.current = 'settings_screen'
-        print("Attempting switchToSettings()")
+        print("Attempting Switch_To_Settings()")
 
+# The main setup for the app. Instantiates the screen manager and binds the height of the tasks grid layout.
 class RaspiDeskStatsApp(App):
     def build(self):
         manager = Screen_Manager()
         grid_layout = manager.ids.tasks_list
         grid_layout.bind(minimum_height=grid_layout.setter('height'))
-        manager.ids.to_do_widget.get_access_code_threaded()
         return manager
 
+# Run the app when this file is run.
 if __name__ == '__main__':
     RaspiDeskStatsApp().run()
     #root = Screen_Manager()

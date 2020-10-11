@@ -82,12 +82,9 @@ class ToDoIntegration():
             if (result == None):
                 # Get auth code
                 authCode = self.Aquire_Auth_Code(self.settings)
-                # No suitable token exists in cache. Let's get a new one from AAD.
-                print("Newly aquired auth code is:", authCode)
 
                 # Aquire token from Microsoft with auth code and scopes from above
                 result = self.app.acquire_token_by_authorization_code(authCode, scopes=self.settings["scopes"])
-                print("Result of aquiring token is:", result)
                 # Strip down the result and convert it to a string to get the final access token
 
             self.access_token = str(result['access_token'])
