@@ -1,3 +1,13 @@
+#Yaml file that contains sensative authentication information for integrations
+*_authentication_settings.yml
+
+#Cache for storing microsoft oauth tokens
+microsoft_cache.bin
+
+#VScode
+*.code-workspace
+/.vscode
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
