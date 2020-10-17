@@ -8,10 +8,13 @@
             spacing: 5
             BoxLayout:
                 orientation: "vertical"
-                BoxLayout:
+                WeatherWidget:
+                    id: weather_widget
                     orientation: "horizontal"
-                    CheckBox:
-
+                    weather_icon: weather_icon
+                    AsyncImage:
+                        id: weather_icon
+                        source: None
                 Button:
                     text: "App Location Placeholder"
             ToDoWidget:

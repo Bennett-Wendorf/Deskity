@@ -8,11 +8,14 @@ from kivy.uix.checkbox import CheckBox
 from kivy.config import Config
 from kivy.core.window import Window
 from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.uix.image import AsyncImage
 from integrations.ToDoIntegrations.ToDo import ToDoIntegration
+from integrations.WeatherIntegrations.Weather import Weather
 from kivy.properties import ObjectProperty
 from kivy.properties import StringProperty
 from kivy.base import runTouchApp
 import threading
+from kivy.clock import Clock
 
 # Set the default size of the window to 480x320, the size of my 3.5" touchscreen module for a Raspberry Pi
 Config.set('graphics', 'width', '480')
@@ -30,7 +33,6 @@ class ToDoWidget(BoxLayout):
 
     def __init__(self, **kwargs):
         super(ToDoWidget, self).__init__(**kwargs)
-        print("Grid_layout:", self.grid_layout)
 
         # If an account exists in cache, get it now. If not, don't do anything and let user sign in on settings screen.
         if(self.integration.app.get_accounts()):
@@ -73,6 +75,20 @@ class TaskItem(RelativeLayout):
         self.task = task
         print("Adding new task:", task['subject'])
         self.task_name = self.task['subject']
+
+class WeatherWidget(BoxLayout):
+    integration = Weather()
+
+    weather_icon = ObjectProperty()
+
+    def __init__(self, **kwargs):
+        super(WeatherWidget, self).__init__(**kwargs)
+        print(self.integration.Get_Icon())
+        # This is not ideal. TODO: Come up with a better solution to the issue with ids
+        Clock.schedule_once(self.Update_UI, 0)
+
+    def Update_UI(self, *args):
+        self.weather_icon.source = self.integration.Get_Icon()
 
 # A Main Screen object. Only one of these should be instantiated at a time. See raspideskstats.kv for layout.
 class MainScreen(Screen):
