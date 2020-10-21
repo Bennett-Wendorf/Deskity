@@ -9,12 +9,6 @@
             BoxLayout:
                 orientation: "vertical"
                 WeatherWidget:
-                    id: weather_widget
-                    orientation: "horizontal"
-                    weather_icon: weather_icon
-                    AsyncImage:
-                        id: weather_icon
-                        source: None
                 Button:
                     text: "App Location Placeholder"
             ToDoWidget:
@@ -52,6 +46,21 @@
                 pos_hint: {'center_x': .5, 'center_y': .5}
                 size_hint: (.2,.1)
                 on_press: root.ids.to_do_widget.Get_Access_Code_Threaded()
+
+<WeatherWidget>:
+    id: weather_widget
+    orientation: "horizontal"
+    weather_icon: weather_icon
+    AsyncImage:
+        id: weather_icon
+        source: None
+    BoxLayout:
+        orientation: "vertical"
+        Label:
+            text: str(int(root.integration.Get_Temp())) + "°"
+            font_size: '40sp'
+        Label:
+            text: "Feels like: " + str(int(root.integration.Get_Feels())) + "°"
 
 <TaskItem>:
     name: "Task Item"

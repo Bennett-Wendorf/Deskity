@@ -29,7 +29,7 @@ class ToDoWidget(BoxLayout):
     token = None
     sign_in_label_text = "Sign in to Microsoft"
     tasks = None
-    grid_layout = ObjectProperty() # Will want to stream line this eventually
+    grid_layout = ObjectProperty()
 
     def __init__(self, **kwargs):
         super(ToDoWidget, self).__init__(**kwargs)
@@ -79,13 +79,15 @@ class TaskItem(RelativeLayout):
 class WeatherWidget(BoxLayout):
     integration = Weather()
 
+    val = 36
+
     weather_icon = ObjectProperty()
 
     def __init__(self, **kwargs):
         super(WeatherWidget, self).__init__(**kwargs)
-        print(self.integration.Get_Icon())
-        # This is not ideal. TODO: Come up with a better solution to the issue with ids
+        # Schedule the icon to populate itself next frame
         Clock.schedule_once(self.Update_UI, 0)
+        print(self.integration.Get_Temp())
 
     def Update_UI(self, *args):
         self.weather_icon.source = self.integration.Get_Icon()
