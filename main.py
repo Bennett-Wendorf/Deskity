@@ -79,8 +79,6 @@ class TaskItem(RelativeLayout):
 class WeatherWidget(BoxLayout):
     integration = Weather()
 
-    val = 36
-
     weather_icon = ObjectProperty()
 
     def __init__(self, **kwargs):
