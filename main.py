@@ -57,24 +57,37 @@ class ToDoWidget(BoxLayout):
         self.tasks = self.integration.Get_Tasks(self.token)
         self.Render_Tasks()
 
-    # For each task in the new list of tasks, instantiate a new task object and add the new object to the grid layout of tasks
     def Render_Tasks(self):
+        """
+        For each task in the new list of tasks, instantiate a new task object and add the new object to the grid layout of tasks
+        """
+
         #This is how it should be able to work. Not sure why this doesn't
         #grid_layout = self.ids['tasks_list']
         for task in self.tasks:
             new_task_item = TaskItem(task)
+
+            # This is the checkbox item of the new task
+            checkbox = new_task_item.children[1]
+            checkbox.bind(active=self.Test_Function)
+
             self.grid_layout.add_widget(new_task_item)
 
-# A task item object. Holds info about the task it contains and sets up a layout with that information. Layout set up in raspideskstats.kv
+    def Test_Function(self, checkbox, value):
+        print(checkbox, "checked with value", value)
+        print("Checkbox parent", checkbox.parent.children[0].text)
+
 class TaskItem(RelativeLayout):
+    """
+    A task item object. Holds info about the task it contains and sets up a layout with that information. Layout set up in raspideskstats.kv
+    """
     task = None
     task_name = StringProperty()
-    #taskName = ""
     def __init__(self, task, **kwargs):
         super(TaskItem, self).__init__(**kwargs)
         self.task = task
-        print("Adding new task:", task['subject'])
-        self.task_name = self.task['subject']
+        print("Adding new task:", task['title'])
+        self.task_name = self.task['title']
 
 class WeatherWidget(BoxLayout):
     integration = Weather()
@@ -85,7 +98,6 @@ class WeatherWidget(BoxLayout):
         super(WeatherWidget, self).__init__(**kwargs)
         # Schedule the icon to populate itself next frame
         Clock.schedule_once(self.Update_UI, 0)
-        print(self.integration.Get_Temp())
 
     def Update_UI(self, *args):
         self.weather_icon.source = self.integration.Get_Icon()

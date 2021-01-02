@@ -61,7 +61,7 @@ class ToDoIntegration():
         cache = SerializableTokenCache()
         if os.path.exists(cache_path):
             cache.deserialize(open(cache_path, "r").read())
-            print("Reading token cache")
+            print("Reading MSAL token cache")
         atexit.register(lambda:
             open(cache_path, "w").write(cache.serialize())
             # Hint: The following optional line persists only when state changed
@@ -84,7 +84,7 @@ class ToDoIntegration():
                 authCode = self.Aquire_Auth_Code(self.settings)
 
                 # Aquire token from Microsoft with auth code and scopes from above
-                result = self.app.acquire_token_by_authorization_code(authCode, scopes=self.settings["scopes"])
+                result = self.app.acquire_token_by_authorization_code(authCode, scopes=self.settings["scopes"], redirect_uri=self.settings['redirect_uri'])
                 # Strip down the result and convert it to a string to get the final access token
 
             self.access_token = str(result['access_token'])
@@ -130,24 +130,64 @@ class ToDoIntegration():
         # This function returns the global authorization_response when it is not equal to None
         return authorization_response
     
-    # Gets To Do Tasks from Microsoft
-    def Get_Tasks(self, token):
+    # Gets To Do Task Lists from Microsoft
+    def Get_Task_Lists(self, headers):
+
+        lists_to_use = ["Tasks", "College", "Packing", "Personal"]
+
+        to_return = []
 
         # Set up endpoint and headers for request
-        endpoint = "https://graph.microsoft.com/beta/me/outlook/tasks"
-        headers = {'Content-Type':'application/json', 'Authorization':'Bearer {0}'.format(token)}
+        # lists_endpoint = "https://graph.microsoft.com/beta/me/outlook/tasks"
+        lists_endpoint = "https://graph.microsoft.com/v1.0/me/todo/lists"
 
         # Run the get request to the endpoint
-        response = requests.get(endpoint,headers=headers)
+        lists_response = requests.get(lists_endpoint,headers=headers)
 
         # If the request was a success, return the JSON data, else print an error code
         # TODO: replace print with thrown exception
-        if(response.status_code == 200):
-            json_data = json.loads(response.text)
-            return json_data['value']
+        if(lists_response.status_code == 200):
+            json_data = json.loads(lists_response.text)
+            # This is a list of task lists available
+            lists = json_data['value']
+            for task_list in lists:
+                if lists_to_use.count(task_list['displayName']) > 0:
+                    # Then this list is in my list of lists to use and I should be pulling data from it
+                    to_return.append(task_list)
+            return to_return
         else:
             print("The response did not return a success code. Returning nothing.")
             return None
+
+    def Get_Tasks(self, token):
+        headers = {'Content-Type':'application/json', 'Authorization':'Bearer {0}'.format(token)}
+        task_lists = self.Get_Task_Lists(headers)
+
+        if not task_lists:
+            print("There was an issue getting task lists.")
+            return None
+
+        tasks_endpoint_base = "https://graph.microsoft.com/v1.0/me/todo/lists/"
+
+        all_tasks = []
+        
+        # Pull all tasks from the chosen lists and add them to the list of all_tasks
+        for task_list in task_lists:
+            endpoint = tasks_endpoint_base + task_list['id'] + "/tasks"
+            tasks_response = requests.get(endpoint, headers=headers)
+
+            if tasks_response.status_code == 200:
+                json_data = json.loads(tasks_response.text)
+                all_tasks.extend(json_data['value'])
+
+        # Remove any completed tasks so that they are not added to this displayed list
+        for task in all_tasks:
+            if(task['status'] == 'completed'):
+                all_tasks.remove(task)
+        
+        return all_tasks
+
+
 
     # Starts a basic web server on localhost port 1080
     # This will only handle one request and then terminate

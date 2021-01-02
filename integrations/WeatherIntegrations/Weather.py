@@ -34,7 +34,6 @@ class Weather():
     # TODO: add some error checking here if some of this data does not exist
     def Get_Weather(self):
         json_data = self.Get_Json_Data()
-        print(json_data)
         if json_data:
             self.location = json_data["name"]
             self.description = json_data["weather"][0]["description"]
