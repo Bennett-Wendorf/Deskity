@@ -10,6 +10,7 @@ from urllib.parse import urlparse, parse_qs
 import requests
 import json
 import atexit
+from integrations.ToDoIntegrations.Task import TaskItem
 
 # The authorization code returned by Microsoft
 # This needs to be global to allow the request handler to obtain it and pass it back to Aquire_Auth_Code()
@@ -43,6 +44,12 @@ class ToDoIntegration():
     # If that should happen, storing the token like this minimalizes the amount of requests needed
     # to Microsoft's servers
     access_token = None
+
+    headers = ""
+
+    tasks = []
+
+    #region MSAL
 
     def __init__(self):
         # This is necessary because Azure does not guarantee
@@ -130,10 +137,12 @@ class ToDoIntegration():
         # This function returns the global authorization_response when it is not equal to None
         return authorization_response
     
-    # Gets To Do Task Lists from Microsoft
-    def Get_Task_Lists(self, headers):
+    #endregion
 
-        lists_to_use = ["Tasks", "College", "Packing", "Personal"]
+    # Gets To Do Task Lists from Microsoft
+    def Get_Task_Lists(self):
+
+        lists_to_use = ["Tasks", "College", "Packing"]
 
         to_return = []
 
@@ -142,7 +151,7 @@ class ToDoIntegration():
         lists_endpoint = "https://graph.microsoft.com/v1.0/me/todo/lists"
 
         # Run the get request to the endpoint
-        lists_response = requests.get(lists_endpoint,headers=headers)
+        lists_response = requests.get(lists_endpoint,headers=self.headers)
 
         # If the request was a success, return the JSON data, else print an error code
         # TODO: replace print with thrown exception
@@ -160,8 +169,8 @@ class ToDoIntegration():
             return None
 
     def Get_Tasks(self, token):
-        headers = {'Content-Type':'application/json', 'Authorization':'Bearer {0}'.format(token)}
-        task_lists = self.Get_Task_Lists(headers)
+        self.headers = {'Content-Type':'application/json', 'Authorization':'Bearer {0}'.format(token)}
+        task_lists = self.Get_Task_Lists()
 
         if not task_lists:
             print("There was an issue getting task lists.")
@@ -174,20 +183,26 @@ class ToDoIntegration():
         # Pull all tasks from the chosen lists and add them to the list of all_tasks
         for task_list in task_lists:
             endpoint = tasks_endpoint_base + task_list['id'] + "/tasks"
-            tasks_response = requests.get(endpoint, headers=headers)
+            tasks_response = requests.get(endpoint, headers=self.headers)
 
             if tasks_response.status_code == 200:
                 json_data = json.loads(tasks_response.text)
-                all_tasks.extend(json_data['value'])
+                json_value = json_data['value']
+                for task in json_value:
+                    all_tasks.append(TaskItem(task, task_list['id']))
 
         # Remove any completed tasks so that they are not added to this displayed list
         for task in all_tasks:
-            if(task['status'] == 'completed'):
+            if(task.Get_Status() == 'completed'):
                 all_tasks.remove(task)
         
         return all_tasks
 
+    def Update_Task(self, task):
 
+        task_endpoint = "https://graph.microsoft.com/v1.0/me/todo/lists/" + task.Get_List_Id() + "/tasks/" + task.Get_Id()
+
+        requests.patch(task_endpoint, data=task.Build_Json(), headers=self.headers)
 
     # Starts a basic web server on localhost port 1080
     # This will only handle one request and then terminate

@@ -17,6 +17,8 @@ from kivy.base import runTouchApp
 import threading
 from kivy.clock import Clock
 
+from integrations.ToDoIntegrations.Task import TaskItem
+
 # Set the default size of the window to 480x320, the size of my 3.5" touchscreen module for a Raspberry Pi
 Config.set('graphics', 'width', '480')
 Config.set('graphics', 'height', '320')
@@ -38,6 +40,8 @@ class ToDoWidget(BoxLayout):
         if(self.integration.app.get_accounts()):
             self.Get_Access_Code_Threaded()
 
+    #region Authentication
+
     # Run Get_Access_Code() in a new thread
     def Get_Access_Code_Threaded(self):
         access_code_thread = threading.Thread(target=self.Get_Access_Code)
@@ -51,11 +55,14 @@ class ToDoWidget(BoxLayout):
         if(self.token != None):
             self.sign_in_label_text = "You are signed in to Microsoft"
             self.Aquire_Task_Info()
+    
+    #endregion
 
     # Aquire task information from the To Do integration and render them on screen
     def Aquire_Task_Info(self):
         self.tasks = self.integration.Get_Tasks(self.token)
         self.Render_Tasks()
+
 
     def Render_Tasks(self):
         """
@@ -65,29 +72,28 @@ class ToDoWidget(BoxLayout):
         #This is how it should be able to work. Not sure why this doesn't
         #grid_layout = self.ids['tasks_list']
         for task in self.tasks:
-            new_task_item = TaskItem(task)
+            # new_task_item = TaskItem(task)
 
             # This is the checkbox item of the new task
-            checkbox = new_task_item.children[1]
+            checkbox = task.children[1]
             checkbox.bind(active=self.Test_Function)
 
-            self.grid_layout.add_widget(new_task_item)
+            self.grid_layout.add_widget(task)
 
     def Test_Function(self, checkbox, value):
         print(checkbox, "checked with value", value)
-        print("Checkbox parent", checkbox.parent.children[0].text)
+        task = checkbox.parent
+        old_status = task.Get_Status()
 
-class TaskItem(RelativeLayout):
-    """
-    A task item object. Holds info about the task it contains and sets up a layout with that information. Layout set up in raspideskstats.kv
-    """
-    task = None
-    task_name = StringProperty()
-    def __init__(self, task, **kwargs):
-        super(TaskItem, self).__init__(**kwargs)
-        self.task = task
-        print("Adding new task:", task['title'])
-        self.task_name = self.task['title']
+        if value:
+            task.Mark_Complete()
+            if old_status != task.Get_Status():
+                self.integration.Update_Task(task)
+        else:
+            print("Task '", task.Get_Title(), "' is already commplete")
+            task.Mark_Uncomplete()
+            if old_status != task.Get_Status():
+                self.integration.Update_Task(task)
 
 class WeatherWidget(BoxLayout):
     integration = Weather()
