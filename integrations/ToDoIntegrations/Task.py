@@ -22,8 +22,6 @@ class TaskItem(RelativeLayout):
         self.body = task_data['body']
         self.list_id = list_id
 
-        print("Adding new task:", self.title)
-
         super(TaskItem, self).__init__(**kwargs)
 
     def Mark_Complete(self):
@@ -77,3 +75,10 @@ class TaskItem(RelativeLayout):
             'body': self.body
         }
         return json.dumps(dictionary)
+
+    def __eq__(self, other):
+        if not isinstance(other, TaskItem):
+            # Don't attempt to compare against unrelated types
+            return NotImplemented
+
+        return self.id == other.id

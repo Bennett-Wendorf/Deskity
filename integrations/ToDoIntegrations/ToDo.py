@@ -96,7 +96,13 @@ class ToDoIntegration():
 
             self.access_token = str(result['access_token'])
         
-        return self.access_token
+        if self.access_token != None:
+            return True
+        else:
+            print("Something went wrong and no token was obtained!")
+            return False
+
+        # return self.access_token
 
     def Pull_From_Token_Cache(self):
         accounts = self.app.get_accounts()
@@ -168,8 +174,8 @@ class ToDoIntegration():
             print("The response did not return a success code. Returning nothing.")
             return None
 
-    def Get_Tasks(self, token):
-        self.headers = {'Content-Type':'application/json', 'Authorization':'Bearer {0}'.format(token)}
+    def Get_Tasks(self):
+        self.headers = {'Content-Type':'application/json', 'Authorization':'Bearer {0}'.format(self.access_token)}
         task_lists = self.Get_Task_Lists()
 
         if not task_lists:

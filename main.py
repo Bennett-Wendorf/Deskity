@@ -28,7 +28,6 @@ Window.size=(480,320)
 class ToDoWidget(BoxLayout):
     integration = ToDoIntegration()
     access_code_thread = None
-    token = None
     sign_in_label_text = "Sign in to Microsoft"
     tasks = None
     grid_layout = ObjectProperty()
@@ -51,8 +50,8 @@ class ToDoWidget(BoxLayout):
     # Aquire a new access token or pull one from the cache. 
     # Assuming one was found, pull new task info from the API
     def Get_Access_Code(self):
-        self.token = self.integration.Aquire_Access_Token()
-        if(self.token != None):
+        success = self.integration.Aquire_Access_Token()
+        if success:
             self.sign_in_label_text = "You are signed in to Microsoft"
             self.Aquire_Task_Info()
     
@@ -60,27 +59,21 @@ class ToDoWidget(BoxLayout):
 
     # Aquire task information from the To Do integration and render them on screen
     def Aquire_Task_Info(self):
-        self.tasks = self.integration.Get_Tasks(self.token)
-        self.Render_Tasks()
-
-
-    def Render_Tasks(self):
-        """
-        For each task in the new list of tasks, instantiate a new task object and add the new object to the grid layout of tasks
-        """
-
+        self.tasks = self.integration.Get_Tasks()
+        
         #This is how it should be able to work. Not sure why this doesn't
         #grid_layout = self.ids['tasks_list']
         for task in self.tasks:
-            # new_task_item = TaskItem(task)
 
             # This is the checkbox item of the new task
             checkbox = task.children[1]
-            checkbox.bind(active=self.Test_Function)
+            checkbox.bind(active=self.Box_Checked)
 
-            self.grid_layout.add_widget(task)
+            if not task in self.grid_layout.children:
+                print("Adding new task:", task.title)
+                self.grid_layout.add_widget(task)
 
-    def Test_Function(self, checkbox, value):
+    def Box_Checked(self, checkbox, value):
         print(checkbox, "checked with value", value)
         task = checkbox.parent
         old_status = task.Get_Status()
@@ -89,6 +82,7 @@ class ToDoWidget(BoxLayout):
             task.Mark_Complete()
             if old_status != task.Get_Status():
                 self.integration.Update_Task(task)
+                self.Aquire_Task_Info()
         else:
             print("Task '", task.Get_Title(), "' is already commplete")
             task.Mark_Uncomplete()
@@ -107,6 +101,8 @@ class WeatherWidget(BoxLayout):
 
     def Update_UI(self, *args):
         self.weather_icon.source = self.integration.Get_Icon()
+
+#region Kivy Screens and Manager
 
 # A Main Screen object. Only one of these should be instantiated at a time. See raspideskstats.kv for layout.
 class MainScreen(Screen):
@@ -143,6 +139,8 @@ class Screen_Manager(ScreenManager):
         self.transition.direction = 'up'
         self.current = 'settings_screen'
         print("Attempting Switch_To_Settings()")
+
+#endregion
 
 # The main setup for the app. Instantiates the screen manager and binds the height of the tasks grid layout.
 class RaspiDeskStatsApp(App):
