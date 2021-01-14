@@ -57,10 +57,10 @@
     BoxLayout:
         orientation: "vertical"
         Label:
-            text: str(int(root.integration.Get_Temp())) + "°"
+            text: str(int(root.Get_Temp())) + "°"
             font_size: '40sp'
         Label:
-            text: "Feels like: " + str(int(root.integration.Get_Feels())) + "°"
+            text: "Feels like: " + str(int(root.Get_Feels())) + "°"
 
 <TaskItem>:
     name: "Task Item"

@@ -1,8 +1,12 @@
 import requests
 import json
 import time
+from kivy.uix.widget import Widget
+from kivy.uix.boxlayout import BoxLayout
+from kivy.properties import ObjectProperty
+from kivy.clock import Clock
 
-class Weather():
+class WeatherWidget(BoxLayout):
     api_key = "bbd4a506dfb2384cf85c057a674e92fb"
 
     base_url = "http://api.openweathermap.org/data/2.5/weather?"
@@ -12,13 +16,21 @@ class Weather():
 
     units = "imperial"
 
-    def __init__(self):
-        # This will need to be set somehow, probably in configuration files
+    weather_icon = ObjectProperty()
+
+    def __init__(self, **kwargs):
+        #TODO: This will need to be set somehow, probably in configuration files
         self.city_name = "Stevens Point"
-
         self.complete_url = self.base_url + "appid=" + self.api_key + "&q=" + self.city_name + "&units=" + self.units
-
         self.Get_Weather()
+
+        # Schedule the icon to populate itself next frame
+        Clock.schedule_once(self.Update_UI, 0)
+
+        super(WeatherWidget, self).__init__(**kwargs)
+
+    def Update_UI(self, *args):
+        self.weather_icon.source = self.Get_Icon()
 
     def Get_Json_Data(self):
         result = requests.get(self.complete_url)

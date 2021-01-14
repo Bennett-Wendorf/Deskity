@@ -10,7 +10,7 @@ from kivy.core.window import Window
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.image import AsyncImage
 from integrations.ToDoIntegrations.ToDo import ToDoIntegration
-from integrations.WeatherIntegrations.Weather import Weather
+from integrations.WeatherIntegrations.WeatherWidget import WeatherWidget
 from kivy.properties import ObjectProperty
 from kivy.properties import StringProperty
 from kivy.base import runTouchApp
@@ -23,6 +23,8 @@ from integrations.ToDoIntegrations.Task import TaskItem
 Config.set('graphics', 'width', '480')
 Config.set('graphics', 'height', '320')
 Window.size=(480,320)
+
+# TODO: Move these widget classes to their own files and integrate with the existing classes there
 
 # The widget that handles all transactions for the Microsoft To Do integration.
 class ToDoWidget(BoxLayout):
@@ -88,19 +90,6 @@ class ToDoWidget(BoxLayout):
             task.Mark_Uncomplete()
             if old_status != task.Get_Status():
                 self.integration.Update_Task(task)
-
-class WeatherWidget(BoxLayout):
-    integration = Weather()
-
-    weather_icon = ObjectProperty()
-
-    def __init__(self, **kwargs):
-        super(WeatherWidget, self).__init__(**kwargs)
-        # Schedule the icon to populate itself next frame
-        Clock.schedule_once(self.Update_UI, 0)
-
-    def Update_UI(self, *args):
-        self.weather_icon.source = self.integration.Get_Icon()
 
 #region Kivy Screens and Manager
 
