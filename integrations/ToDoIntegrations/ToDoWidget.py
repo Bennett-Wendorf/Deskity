@@ -1,16 +1,26 @@
-from msal import PublicClientApplication
-from msal import SerializableTokenCache
-import yaml
-from requests_oauthlib import OAuth2Session
-import os
+import requests
 import webbrowser
 import http.server
-import threading
 from urllib.parse import urlparse, parse_qs
-import requests
+
 import json
+import yaml
+
 import atexit
+import threading
+
+# Integration imports
 from integrations.ToDoIntegrations.Task import TaskItem
+
+# MSAL authentication imports
+from msal import PublicClientApplication
+from msal import SerializableTokenCache
+from requests_oauthlib import OAuth2Session
+import os
+
+# Kivy imports
+from kivy.properties import ObjectProperty
+from kivy.uix.boxlayout import BoxLayout
 
 # The authorization code returned by Microsoft
 # This needs to be global to allow the request handler to obtain it and pass it back to Aquire_Auth_Code()
@@ -29,7 +39,8 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
             self.path = 'index.html'
         return http.server.SimpleHTTPRequestHandler.do_GET(self)
 
-class ToDoIntegration():
+# This widget handles all transactions for the Microsoft To Do integration.
+class ToDoWidget(BoxLayout):
 
     # Load the authentication_settings.yml file
     # Note: this file is not tracked by github, so it will need to be created before running
@@ -49,9 +60,10 @@ class ToDoIntegration():
 
     tasks = []
 
-    #region MSAL
+    sign_in_label_text = "Sign in to Microsoft"
+    grid_layout = ObjectProperty()
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         # This is necessary because Azure does not guarantee
         # to return scopes in the same case and order as requested
         os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
@@ -61,6 +73,60 @@ class ToDoIntegration():
         
         # Instantiate the Public Client App
         self.app = PublicClientApplication(self.settings['app_id'], authority=self.settings["authority"], token_cache=cache)
+
+        # If an account exists in cache, get it now. If not, don't do anything and let user sign in on settings screen.
+        if(self.app.get_accounts()):
+            self.Get_Access_Code_Threaded()
+
+        super(ToDoWidget, self).__init__(**kwargs)
+
+    # Run Get_Access_Code() in a new thread
+    def Get_Access_Code_Threaded(self):
+        access_code_thread = threading.Thread(target=self.Get_Access_Code)
+        access_code_thread.setDaemon(True)
+        access_code_thread.start()
+
+    # Aquire a new access token or pull one from the cache. 
+    # Assuming one was found, pull new task info from the API
+    def Get_Access_Code(self):
+        success = self.Aquire_Access_Token()
+        if success:
+            self.sign_in_label_text = "You are signed in to Microsoft"
+            self.Aquire_Task_Info()
+
+    # Aquire tasks from the API and render them on screen
+    def Aquire_Task_Info(self):
+        self.tasks = self.Get_Tasks()
+        
+        #This is how it should be able to work. Not sure why this doesn't work
+        #grid_layout = self.ids['tasks_list']
+        for task in self.tasks:
+
+            # This is the checkbox item of the new task
+            checkbox = task.children[1]
+            checkbox.bind(active=self.Box_Checked)
+
+            if not task in self.grid_layout.children:
+                print("Adding new task:", task.title)
+                self.grid_layout.add_widget(task)
+
+    def Box_Checked(self, checkbox, value):
+        print(checkbox, "checked with value", value)
+        task = checkbox.parent
+        old_status = task.Get_Status()
+
+        if value:
+            task.Mark_Complete()
+            if old_status != task.Get_Status():
+                self.Update_Task(task)
+                self.Aquire_Task_Info()
+        else:
+            print("Task '", task.Get_Title(), "' is already commplete")
+            task.Mark_Uncomplete()
+            if old_status != task.Get_Status():
+                self.Update_Task(task)
+
+    #region MSAL
 
     # Create the cache object, deserialize it for use, and register it to be reserialized before the application quits.
     def Deserialize_Cache(self, cache_path):
