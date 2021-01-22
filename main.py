@@ -15,7 +15,7 @@ Window.size=(480,320)
 
 # A Main Screen object. Only one of these should be instantiated at a time. See raspideskstats.kv for layout.
 class MainScreen(Screen):
-    pass       
+    pass
 
 # A Settings Screen object. Only one of these should be instantiated at a time. See raspideskstats.kv for layout.
 class SettingsScreen(Screen):

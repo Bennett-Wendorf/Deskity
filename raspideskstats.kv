@@ -16,6 +16,8 @@
                 name: 'to_do_widget'
                 orientation: 'vertical'
                 grid_layout: tasks_list
+                sign_in_button: microsoft_sign_in
+                sign_in_label_text: 'Sign In To Microsoft'
                 ScrollView:
                     size: self.size
                     GridLayout:
@@ -42,10 +44,13 @@
                 pos_hint: {'center_x': .5, 'center_y': .6}
             Button:
                 id: microsoft_sign_in
+                visible: True
                 text: "Sign In"
                 pos_hint: {'center_x': .5, 'center_y': .5}
-                size_hint: (.2,.1)
-                on_press: root.ids.to_do_widget.Get_Access_Code_Threaded()
+                size_hint: (.2,.1) if self.visible else (0,0)
+                opacity: 1 if self.visible else 0
+                disabled: not self.visible
+                on_press: root.ids.to_do_widget.Render_Tasks_Threaded()
 
 <WeatherWidget>:
     id: weather_widget
