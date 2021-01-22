@@ -20,6 +20,7 @@ import os
 
 # Kivy imports
 from kivy.properties import ObjectProperty
+from kivy.properties import StringProperty
 from kivy.uix.boxlayout import BoxLayout
 
 # The authorization code returned by Microsoft
@@ -50,17 +51,26 @@ class ToDoWidget(BoxLayout):
     # The instance of the Public Client Application from MSAL. This is assigned in __init__
     app = None
 
-    # The access token aquired in Aquire_Access_Token. This is a class variable for the cases
-    # where there is an attempt to make a request again in the short time this token is valid for.
-    # If that should happen, storing the token like this minimalizes the amount of requests needed
-    # to Microsoft's servers
-    access_token = None
-
-    headers = ""
-
     tasks = []
 
-    sign_in_label_text = "Sign in to Microsoft"
+    # The settings required for msal to properly authenticate the user.
+    msal = {
+        'authority': "https://login.microsoftonline.com/common",
+        'authorize_endpoint': "/oauth2/v2.0/authorize",
+        'redirect_uri': "http://localhost:1080",
+        'token_endpoint': "/oauth2/v2.0/token",
+        'scopes': ["user.read", "Tasks.ReadWrite"],
+        'headers': "",
+
+        # The access token aquired in Aquire_Access_Token. This is a class variable for the cases
+        # where there is an attempt to make a request again in the short time this token is valid for.
+        # If that should happen, storing the token like this minimalizes the amount of requests needed
+        # to Microsoft's servers
+        'access_token': None
+    }
+
+    sign_in_label_text = StringProperty()
+    sign_in_button = ObjectProperty()
     grid_layout = ObjectProperty()
 
     def __init__(self, **kwargs):
@@ -72,26 +82,115 @@ class ToDoWidget(BoxLayout):
         cache = self.Deserialize_Cache("integrations/ToDoIntegrations/microsoft_cache.bin")
         
         # Instantiate the Public Client App
-        self.app = PublicClientApplication(self.settings['app_id'], authority=self.settings["authority"], token_cache=cache)
+        self.app = PublicClientApplication(self.settings['app_id'], authority=self.msal['authority'], token_cache=cache)
 
         # If an account exists in cache, get it now. If not, don't do anything and let user sign in on settings screen.
         if(self.app.get_accounts()):
-            self.Get_Access_Code_Threaded()
+            self.Render_Tasks_Threaded()
 
         super(ToDoWidget, self).__init__(**kwargs)
 
+    #region MSAL
+
+    # Create the cache object, deserialize it for use, and register it to be reserialized before the application quits.
+    def Deserialize_Cache(self, cache_path):
+
+        cache = SerializableTokenCache()
+        if os.path.exists(cache_path):
+            cache.deserialize(open(cache_path, "r").read())
+            print("Reading MSAL token cache")
+
+        # Register a function with atexit to make sure the cache is written to just before the application terminates.
+        atexit.register(lambda:
+            open(cache_path, "w").write(cache.serialize())
+            # Hint: The following optional line persists only when state changed
+            if cache.has_state_changed else None
+        )
+
+        return cache
+
+    # Gets access token however it is needed and returns that token
+    def Aquire_Access_Token(self):
+        result = None
+        accounts = self.app.get_accounts()
+
+        if(self.msal['access_token'] == None):
+
+            result = self.Pull_From_Token_Cache()
+
+            if (result == None):
+                # Then there was no token in the cache
+
+                # Get auth code
+                authCode = self.Aquire_Auth_Code(self.settings)
+
+                # Aquire token from Microsoft with auth code and scopes from above
+                result = self.app.acquire_token_by_authorization_code(authCode, scopes=self.msal["scopes"], redirect_uri=self.msal['redirect_uri'])
+            
+            # Strip down the result and convert it to a string to get the final access token
+            self.msal['access_token'] = str(result['access_token'])
+        
+        if self.msal['access_token'] != None:
+            return True
+        else:
+            print("Something went wrong and no token was obtained!")
+            return False
+
+
+    def Pull_From_Token_Cache(self):
+        accounts = self.app.get_accounts()
+        if accounts:
+            # TODO: Will implement better account management later. For now, the first account found is chosen.
+            return self.app.acquire_token_silent_with_error(self.msal["scopes"], account=accounts[0])
+        else:
+            print("No accounts were found.")
+            return None
+
+    # Aquire msal auth code from Microsoft
+    def Aquire_Auth_Code(self, settings):
+
+        # Use the global variable authorization_response instead of a local one
+        global authorization_response
+
+        # Begin localhost web server in a new thread to handle the get request that will come from Microsoft
+        webServerThread = threading.Thread(target=self.Run_Localhost_Server)
+        webServerThread.setDaemon(True)
+        webServerThread.start()
+
+        # Builds url from yml settings
+        authorize_url = '{0}{1}'.format(self.msal['authority'], self.msal['authorize_endpoint'])
+
+        # Begins OAuth session with app_id, scopes, and redirect_uri from yml
+        aadAuth = OAuth2Session(settings['app_id'], scope=self.msal['scopes'], redirect_uri=self.msal['redirect_uri'])
+
+        # Obtain final login url from the OAuth session
+        sign_in_url, state = aadAuth.authorization_url(authorize_url)
+
+        # Opens a web browser with the new sign in url
+        webbrowser.open(sign_in_url, new=2, autoraise=True)
+
+        # Waits until the web server thread closes before continuing
+        # This ensures that an authorization response will be returned.
+        webServerThread.join()
+
+        # This function returns the global authorization_response when it is not equal to None
+        return authorization_response
+    
+    #endregion
+
     # Run Get_Access_Code() in a new thread
-    def Get_Access_Code_Threaded(self):
-        access_code_thread = threading.Thread(target=self.Get_Access_Code)
+    def Render_Tasks_Threaded(self):
+        access_code_thread = threading.Thread(target=self.Render_Tasks)
         access_code_thread.setDaemon(True)
         access_code_thread.start()
 
     # Aquire a new access token or pull one from the cache. 
     # Assuming one was found, pull new task info from the API
-    def Get_Access_Code(self):
+    def Render_Tasks(self):
         success = self.Aquire_Access_Token()
         if success:
             self.sign_in_label_text = "You are signed in to Microsoft"
+            self.sign_in_button.visible = False
             self.Aquire_Task_Info()
 
     # Aquire tasks from the API and render them on screen
@@ -126,95 +225,13 @@ class ToDoWidget(BoxLayout):
             if old_status != task.Get_Status():
                 self.Update_Task(task)
 
-    #region MSAL
-
-    # Create the cache object, deserialize it for use, and register it to be reserialized before the application quits.
-    def Deserialize_Cache(self, cache_path):
-
-        cache = SerializableTokenCache()
-        if os.path.exists(cache_path):
-            cache.deserialize(open(cache_path, "r").read())
-            print("Reading MSAL token cache")
-        atexit.register(lambda:
-            open(cache_path, "w").write(cache.serialize())
-            # Hint: The following optional line persists only when state changed
-            if cache.has_state_changed else None
-            )
-
-        return cache
-
-    # Gets access token however it is needed and returns that token
-    def Aquire_Access_Token(self):
-        result = None
-        accounts = self.app.get_accounts()
-
-        if(self.access_token == None):
-
-            result = self.Pull_From_Token_Cache()
-
-            if (result == None):
-                # Get auth code
-                authCode = self.Aquire_Auth_Code(self.settings)
-
-                # Aquire token from Microsoft with auth code and scopes from above
-                result = self.app.acquire_token_by_authorization_code(authCode, scopes=self.settings["scopes"], redirect_uri=self.settings['redirect_uri'])
-                # Strip down the result and convert it to a string to get the final access token
-
-            self.access_token = str(result['access_token'])
-        
-        if self.access_token != None:
-            return True
-        else:
-            print("Something went wrong and no token was obtained!")
-            return False
-
-        # return self.access_token
-
-    def Pull_From_Token_Cache(self):
-        accounts = self.app.get_accounts()
-        if accounts:
-            # Will implement better account management later. For now, the first account found is chosen.
-            return self.app.acquire_token_silent_with_error(self.settings["scopes"], account=accounts[0])
-        else:
-            print("No accounts were found.")
-            return None
-
-    # Aquire msal auth code from Microsoft
-    def Aquire_Auth_Code(self, settings):
-
-        # Use the global variable authorization_response instead of a local one
-        global authorization_response
-
-        # Begin localhost web server in a new thread to handle the get request that will come from Microsoft
-        webServerThread = threading.Thread(target=self.Run_Localhost_Server)
-        webServerThread.setDaemon(True)
-        webServerThread.start()
-
-        # Builds url from yml settings
-        authorize_url = '{0}{1}'.format(settings['authority'], settings['authorize_endpoint'])
-
-        # Begins OAuth session with app_id, scopes, and redirect_uri from yml
-        aadAuth = OAuth2Session(settings['app_id'], scope=settings['scopes'], redirect_uri=settings['redirect_uri'])
-
-        # Obtain final login url from the OAuth session
-        sign_in_url, state = aadAuth.authorization_url(authorize_url)
-
-        # Opens a web browser with the new sign in url
-        webbrowser.open(sign_in_url, new=2, autoraise=True)
-
-        # Waits here until the web server receives an authorization_response
-        while(authorization_response == None):
-            pass
-
-        # This function returns the global authorization_response when it is not equal to None
-        return authorization_response
-    
-    #endregion
-
-    # Gets To Do Task Lists from Microsoft
+    # Gets To Do Task Lists from Microsoft's graph API
+    # NOTE: This is usually only run by the Get_Tasks method, there should 
+    # be no need to get task lists without pulling the tasks from them.
     def Get_Task_Lists(self):
 
-        lists_to_use = ["Tasks", "College", "Packing"]
+        # Leave this empty to pull from all available task lists, or specify the names of task lists that you would like to pull from.
+        lists_to_use = []
 
         to_return = []
 
@@ -223,7 +240,7 @@ class ToDoWidget(BoxLayout):
         lists_endpoint = "https://graph.microsoft.com/v1.0/me/todo/lists"
 
         # Run the get request to the endpoint
-        lists_response = requests.get(lists_endpoint,headers=self.headers)
+        lists_response = requests.get(lists_endpoint,headers=self.msal['headers'])
 
         # If the request was a success, return the JSON data, else print an error code
         # TODO: replace print with thrown exception
@@ -231,17 +248,22 @@ class ToDoWidget(BoxLayout):
             json_data = json.loads(lists_response.text)
             # This is a list of task lists available
             lists = json_data['value']
-            for task_list in lists:
-                if lists_to_use.count(task_list['displayName']) > 0:
-                    # Then this list is in my list of lists to use and I should be pulling data from it
-                    to_return.append(task_list)
+
+            if lists_to_use:
+                for task_list in lists:
+                    if lists_to_use.count(task_list['displayName']) > 0:
+                        # Then this list is in my list of lists to use and I should be pulling data from it
+                        to_return.append(task_list)
+            else:
+                to_return.extend(lists)
             return to_return
         else:
             print("The response did not return a success code. Returning nothing.")
             return None
 
+    # Pulls individual tasks from the lists returned by Get_Task_Lists and returns them as a single list.
     def Get_Tasks(self):
-        self.headers = {'Content-Type':'application/json', 'Authorization':'Bearer {0}'.format(self.access_token)}
+        self.msal['headers'] = {'Content-Type':'application/json', 'Authorization':'Bearer {0}'.format(self.msal['access_token'])}
         task_lists = self.Get_Task_Lists()
 
         if not task_lists:
@@ -251,32 +273,41 @@ class ToDoWidget(BoxLayout):
         tasks_endpoint_base = "https://graph.microsoft.com/v1.0/me/todo/lists/"
 
         all_tasks = []
-        
+
         # Pull all tasks from the chosen lists and add them to the list of all_tasks
         for task_list in task_lists:
             endpoint = tasks_endpoint_base + task_list['id'] + "/tasks"
-            tasks_response = requests.get(endpoint, headers=self.headers)
 
-            if tasks_response.status_code == 200:
-                json_data = json.loads(tasks_response.text)
-                json_value = json_data['value']
-                for task in json_value:
-                    all_tasks.append(TaskItem(task, task_list['id']))
+            while True:
+                tasks_response = requests.get(endpoint, headers=self.msal['headers'])
+
+                if tasks_response.status_code == 200:
+                    json_data = json.loads(tasks_response.text)
+                    json_value = json_data['value']
+                    for task in json_value:
+                        all_tasks.append(TaskItem(task, task_list['id']))
+
+                if not '@odata.nextLink' in json_data:
+                    break
+
+                endpoint = json_data['@odata.nextLink']
+
+        print("All Tasks:", [(test_task.Get_Title(), test_task.Get_Status()) for test_task in all_tasks])
 
         # Remove any completed tasks so that they are not added to this displayed list
-        for task in all_tasks:
-            if(task.Get_Status() == 'completed'):
-                all_tasks.remove(task)
+        all_tasks[:] = [task for task in all_tasks if (task.Get_Status() != 'completed')]
         
         return all_tasks
 
+    # Sends a patch request to Microsoft's graph API to update the task data for the specified task.
     def Update_Task(self, task):
 
         task_endpoint = "https://graph.microsoft.com/v1.0/me/todo/lists/" + task.Get_List_Id() + "/tasks/" + task.Get_Id()
 
-        requests.patch(task_endpoint, data=task.Build_Json(), headers=self.headers)
+        requests.patch(task_endpoint, data=task.Build_Json(), headers=self.msal['headers'])
 
-    # Starts a basic web server on localhost port 1080
+    # Starts a basic web server on localhost port 1080 using 
+    # the custom request handler defined at the start of this file.
     # This will only handle one request and then terminate
     def Run_Localhost_Server(self, server_class=http.server.HTTPServer, handler_class=RequestHandler):
         server_address = ('127.0.0.1', 1080)
