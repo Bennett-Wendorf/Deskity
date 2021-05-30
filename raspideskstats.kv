@@ -15,19 +15,27 @@
                 id: to_do_widget
                 name: 'to_do_widget'
                 orientation: 'vertical'
-                grid_layout: tasks_list
+                # grid_layout: tasks_list
                 sign_in_button: microsoft_sign_in
                 sign_in_label_text: 'Sign In To Microsoft'
-                ScrollView:
-                    size: self.size
-                    GridLayout:
-                        id: tasks_list
-                        cols: 1
-                        row_default_height: 30
-                        row_force_default: True
-                        size_hint_y: None
-                        spacing: 0, 10
-                        padding: 4
+                viewclass: 'TaskItem'
+                RecycleBoxLayout:
+                    default_size: None, dp(56)
+                    default_size_hint: 1, None
+                    size_hint_y: None
+                    height: self.minimum_height
+                    orientation: 'vertical'
+                # TODO Remove this old scroll view
+                # ScrollView:
+                #     size: self.size
+                #     GridLayout:
+                #         id: tasks_list
+                #         cols: 1
+                #         row_default_height: 30
+                #         row_force_default: True
+                #         size_hint_y: None
+                #         spacing: 0, 10
+                #         padding: 4
     SettingsScreen:
         id: settings_screen
         name: 'settings_screen'
@@ -50,7 +58,7 @@
                 size_hint: (.2,.1) if self.visible else (0,0)
                 opacity: 1 if self.visible else 0
                 disabled: not self.visible
-                on_press: root.ids.to_do_widget.Render_Tasks_Threaded()
+                on_press: root.ids.to_do_widget.Setup_Tasks()
 
 <WeatherWidget>:
     id: weather_widget
@@ -69,17 +77,23 @@
 
 <TaskItem>:
     name: "Task Item"
+    visible: True
+    size_hint_y: 1 if self.visible else 0
+    opacity: 1 if self.visible else 0
+    disabled: not self.visible
     CheckBox:
         pos_hint: {'center_x': 0.05, 'center_y': 0.5}
-        size_hint: (.1,.9)
+        size_hint_x: .1
+        size_hint_y: .9 if root.visible else 0
         label: "Test"
+        active: True if root.status == 'completed' else False
     Label:
         pos_hint: {'center_x': 0.57, 'center_y': 0.5}
-        size_hint: (.86,.9)
+        size_hint_x: .86
+        size_hint_y: .9 if root.visible else 0
         text: root.title
-        size_hint_y: None
         text_size: self.width, None
-        height: self.texture_size[1]
+        # height: self.texture_size[1]
         canvas.before:
             Color:
                 rgba: 0,.1,.3,1

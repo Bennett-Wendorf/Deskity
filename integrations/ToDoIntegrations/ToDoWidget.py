@@ -1,27 +1,39 @@
+#region Imports
+
+# HTTP requests and url parsing
 import requests
 import webbrowser
 import http.server
 from urllib.parse import urlparse, parse_qs
 
+# Data formats
 import json
 import yaml
 
+# Scheduling and threading
 import atexit
+import time
 import threading
+from kivy.clock import Clock
 
-# Integration imports
+# Integration
 from integrations.ToDoIntegrations.Task import TaskItem
 
-# MSAL authentication imports
-from msal import PublicClientApplication
-from msal import SerializableTokenCache
+# MSAL authentication
+from msal import PublicClientApplication, SerializableTokenCache
 from requests_oauthlib import OAuth2Session
 import os
 
-# Kivy imports
-from kivy.properties import ObjectProperty
-from kivy.properties import StringProperty
+# Kivy
+from kivy.properties import ObjectProperty, StringProperty
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.label import Label
+from kivy.uix.button import Button 
+from functools import partial
+from kivy.uix.recycleboxlayout import RecycleBoxLayout
+from kivy.uix.recycleview import RecycleView
+
+#endregion
 
 # The authorization code returned by Microsoft
 # This needs to be global to allow the request handler to obtain it and pass it back to Aquire_Auth_Code()
@@ -40,9 +52,8 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
             self.path = 'index.html'
         return http.server.SimpleHTTPRequestHandler.do_GET(self)
 
-# This widget handles all transactions for the Microsoft To Do integration.
-class ToDoWidget(BoxLayout):
-
+# This widget andles all transactions for the Microsoft To Do integration,
+class ToDoWidget(RecycleView):
     # Load the authentication_settings.yml file
     # Note: this file is not tracked by github, so it will need to be created before running
     stream = open('integrations/ToDoIntegrations/microsoft_authentication_settings.yml', 'r')
@@ -51,9 +62,13 @@ class ToDoWidget(BoxLayout):
     # The instance of the Public Client Application from MSAL. This is assigned in __init__
     app = None
 
-    tasks = []
+    last_task_update = 100000
+    task_update_threshold = 30000
 
-    # The settings required for msal to properly authenticate the user.
+    # This stores all the actual task data in dictionaries
+    data = []
+
+    # The settings required for msal to properly authenticate the user
     msal = {
         'authority': "https://login.microsoftonline.com/common",
         'authorize_endpoint': "/oauth2/v2.0/authorize",
@@ -71,24 +86,26 @@ class ToDoWidget(BoxLayout):
 
     sign_in_label_text = StringProperty()
     sign_in_button = ObjectProperty()
-    grid_layout = ObjectProperty()
-
+    
     def __init__(self, **kwargs):
+
+        super(ToDoWidget, self).__init__(**kwargs)
+
         # This is necessary because Azure does not guarantee
-        # to return scopes in the same case and order as requested
+        # the return of scopes in the same case and order as requested
         os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
         os.environ['OAUTHLIB_IGNORE_SCOPE_CHANGE'] = '1'
 
         cache = self.Deserialize_Cache("integrations/ToDoIntegrations/microsoft_cache.bin")
-        
+
         # Instantiate the Public Client App
         self.app = PublicClientApplication(self.settings['app_id'], authority=self.msal['authority'], token_cache=cache)
 
         # If an account exists in cache, get it now. If not, don't do anything and let user sign in on settings screen.
         if(self.app.get_accounts()):
-            self.Render_Tasks_Threaded()
-
-        super(ToDoWidget, self).__init__(**kwargs)
+            # Clock.schedule_once(self.Setup_Tasks)
+            self.Setup_Tasks()
+            print("After task scheduling")
 
     #region MSAL
 
@@ -131,6 +148,8 @@ class ToDoWidget(BoxLayout):
             self.msal['access_token'] = str(result['access_token'])
         
         if self.msal['access_token'] != None:
+            self.sign_in_label_text = "You are signed in to Microsoft"
+            # self.sign_in_button.visible = False TODO: Re-enable this
             return True
         else:
             print("Something went wrong and no token was obtained!")
@@ -178,52 +197,18 @@ class ToDoWidget(BoxLayout):
     
     #endregion
 
-    # Run Get_Access_Code() in a new thread
-    def Render_Tasks_Threaded(self):
-        access_code_thread = threading.Thread(target=self.Render_Tasks)
-        access_code_thread.setDaemon(True)
-        access_code_thread.start()
-
-    # Aquire a new access token or pull one from the cache. 
-    # Assuming one was found, pull new task info from the API
-    def Render_Tasks(self):
+    def Setup_Tasks(self, *kwargs):
         success = self.Aquire_Access_Token()
         if success:
-            self.sign_in_label_text = "You are signed in to Microsoft"
-            self.sign_in_button.visible = False
-            self.Aquire_Task_Info()
-
-    # Aquire tasks from the API and render them on screen
-    def Aquire_Task_Info(self):
-        self.tasks = self.Get_Tasks()
-        
-        #This is how it should be able to work. Not sure why this doesn't work
-        #grid_layout = self.ids['tasks_list']
-        for task in self.tasks:
-
-            # This is the checkbox item of the new task
-            checkbox = task.children[1]
-            checkbox.bind(active=self.Box_Checked)
-
-            if not task in self.grid_layout.children:
-                print("Adding new task:", task.title)
-                self.grid_layout.add_widget(task)
-
-    def Box_Checked(self, checkbox, value):
-        print(checkbox, "checked with value", value)
-        task = checkbox.parent
-        old_status = task.Get_Status()
-
-        if value:
-            task.Mark_Complete()
-            if old_status != task.Get_Status():
-                self.Update_Task(task)
-                self.Aquire_Task_Info()
-        else:
-            print("Task '", task.Get_Title(), "' is already commplete")
-            task.Mark_Uncomplete()
-            if old_status != task.Get_Status():
-                self.Update_Task(task)
+            if time.time() - self.last_task_update > self.task_update_threshold:
+                self.data = self.Get_Tasks()
+                self.last_task_update = time.time()
+            
+            # for task in self.data:
+            #     # This is the checkbox widget in the new task
+            #     checkbox = task.children[1]
+            #     # Bind the checkbox to run the Box_Checked function as soon as possible (Usually next frame)
+            #     checkbox.bind(active=lambda checkbox, value:Clock.schedule_once(partial(self.Box_Checked, checkbox, value)))
 
     # Gets To Do Task Lists from Microsoft's graph API
     # NOTE: This is usually only run by the Get_Tasks method, there should 
@@ -231,12 +216,12 @@ class ToDoWidget(BoxLayout):
     def Get_Task_Lists(self):
 
         # Leave this empty to pull from all available task lists, or specify the names of task lists that you would like to pull from.
-        lists_to_use = []
+        # TODO: add this to some kind of setting or config file
+        lists_to_use = ["Test"]
 
         to_return = []
 
         # Set up endpoint and headers for request
-        # lists_endpoint = "https://graph.microsoft.com/beta/me/outlook/tasks"
         lists_endpoint = "https://graph.microsoft.com/v1.0/me/todo/lists"
 
         # Run the get request to the endpoint
@@ -284,27 +269,33 @@ class ToDoWidget(BoxLayout):
                 if tasks_response.status_code == 200:
                     json_data = json.loads(tasks_response.text)
                     json_value = json_data['value']
-                    for task in json_value:
-                        all_tasks.append(TaskItem(task, task_list['id']))
+                    all_tasks.extend(json_value)
+                    # print(json_value) # TODO: Remove this
 
+                # TODO Find a more logical way to do this
                 if not '@odata.nextLink' in json_data:
                     break
 
                 endpoint = json_data['@odata.nextLink']
-
-        print("All Tasks:", [(test_task.Get_Title(), test_task.Get_Status()) for test_task in all_tasks])
-
-        # Remove any completed tasks so that they are not added to this displayed list
-        all_tasks[:] = [task for task in all_tasks if (task.Get_Status() != 'completed')]
         
         return all_tasks
 
     # Sends a patch request to Microsoft's graph API to update the task data for the specified task.
+    # Also updates the task locally in terms of location, checkboxes, etc.
+    # TODO: Update this to handle the new data format
     def Update_Task(self, task):
 
+        # Update remote task
         task_endpoint = "https://graph.microsoft.com/v1.0/me/todo/lists/" + task.Get_List_Id() + "/tasks/" + task.Get_Id()
-
         requests.patch(task_endpoint, data=task.Build_Json(), headers=self.msal['headers'])
+
+        # Update local task
+        # This section can contain any checks that need to be made any time a local task is updated
+        # TODO Update this to handle movement of tasks between complete and incomplete sections
+        print("Is task active?", task.isCompleted)
+        if task.isCompleted:
+            # Then the task needs to be in the displayed list.
+            pass
 
     # Starts a basic web server on localhost port 1080 using 
     # the custom request handler defined at the start of this file.

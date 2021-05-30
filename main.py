@@ -55,12 +55,12 @@ class Screen_Manager(ScreenManager):
 class RaspiDeskStatsApp(App):
     def build(self):
         manager = Screen_Manager()
-        grid_layout = manager.ids.tasks_list
-        grid_layout.bind(minimum_height=grid_layout.setter('height'))
+        # grid_layout = manager.ids.tasks_list
+        # grid_layout.bind(minimum_height=grid_layout.setter('height'))
         return manager
 
 # Run the app when this file is run.
 if __name__ == '__main__':
     RaspiDeskStatsApp().run()
-    #root = Screen_Manager()
-    #runTouchApp(root)
+    # root = Screen_Manager()
+    # runTouchApp(root)
