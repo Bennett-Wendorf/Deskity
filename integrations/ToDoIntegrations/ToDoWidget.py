@@ -13,6 +13,7 @@ import yaml
 # Scheduling and threading
 import atexit
 import time
+from datetime import datetime
 import threading
 from kivy.clock import Clock
 
@@ -32,6 +33,7 @@ from kivy.uix.button import Button
 from functools import partial
 from kivy.uix.recycleboxlayout import RecycleBoxLayout
 from kivy.uix.recycleview import RecycleView
+from kivy.uix.recycleview.datamodel import RecycleDataModel
 
 #endregion
 
@@ -103,9 +105,8 @@ class ToDoWidget(RecycleView):
 
         # If an account exists in cache, get it now. If not, don't do anything and let user sign in on settings screen.
         if(self.app.get_accounts()):
-            # Clock.schedule_once(self.Setup_Tasks)
             self.Setup_Tasks()
-            print("After task scheduling")
+            print("[To Do Widget] [{0}] Finished setting up tasks during initialization".format(self.Get_Timestamp()))
 
     #region MSAL
 
@@ -115,7 +116,7 @@ class ToDoWidget(RecycleView):
         cache = SerializableTokenCache()
         if os.path.exists(cache_path):
             cache.deserialize(open(cache_path, "r").read())
-            print("Reading MSAL token cache")
+            print("[To Do Widget] [{0}] Reading MSAL token cache".format(self.Get_Timestamp()))
 
         # Register a function with atexit to make sure the cache is written to just before the application terminates.
         atexit.register(lambda:
@@ -197,23 +198,26 @@ class ToDoWidget(RecycleView):
     
     #endregion
 
+    def refresh_from_data(self, *largs, **kwargs):
+        # Resort the data after the update
+        self.data = self.multikeysort(self.data, ['-status', 'title'])
+        super(ToDoWidget, self).refresh_from_data(largs, kwargs)
+
     def Setup_Tasks(self, *kwargs):
+        print("[To Do Widget] [{0}] Starting task setup".format(self.Get_Timestamp()))
         success = self.Aquire_Access_Token()
         if success:
             if time.time() - self.last_task_update > self.task_update_threshold:
-                self.data = self.Get_Tasks()
+                # TODO Add this sorting to a config file
+                self.data = self.multikeysort(self.Get_Tasks(), ['-status', 'title'])
                 self.last_task_update = time.time()
-            
-            # for task in self.data:
-            #     # This is the checkbox widget in the new task
-            #     checkbox = task.children[1]
-            #     # Bind the checkbox to run the Box_Checked function as soon as possible (Usually next frame)
-            #     checkbox.bind(active=lambda checkbox, value:Clock.schedule_once(partial(self.Box_Checked, checkbox, value)))
 
     # Gets To Do Task Lists from Microsoft's graph API
     # NOTE: This is usually only run by the Get_Tasks method, there should 
     # be no need to get task lists without pulling the tasks from them.
     def Get_Task_Lists(self):
+
+        print("[To Do Widget] [{0}] Getting task lists".format(self.Get_Timestamp()))
 
         # Leave this empty to pull from all available task lists, or specify the names of task lists that you would like to pull from.
         # TODO: add this to some kind of setting or config file
@@ -225,7 +229,7 @@ class ToDoWidget(RecycleView):
         lists_endpoint = "https://graph.microsoft.com/v1.0/me/todo/lists"
 
         # Run the get request to the endpoint
-        lists_response = requests.get(lists_endpoint,headers=self.msal['headers'])
+        lists_response = requests.get(lists_endpoint, headers=self.msal['headers'])
 
         # If the request was a success, return the JSON data, else print an error code
         # TODO: replace print with thrown exception
@@ -241,6 +245,8 @@ class ToDoWidget(RecycleView):
                         to_return.append(task_list)
             else:
                 to_return.extend(lists)
+            
+            print("[To Do Widget] [{0}] Obtained task lists successfully".format(self.Get_Timestamp()))
             return to_return
         else:
             print("The response did not return a success code. Returning nothing.")
@@ -261,6 +267,7 @@ class ToDoWidget(RecycleView):
 
         # Pull all tasks from the chosen lists and add them to the list of all_tasks
         for task_list in task_lists:
+            print("[To Do Widget] [{0}] Getting tasks from list '{1}'".format(self.Get_Timestamp(), task_list['displayName']))
             endpoint = tasks_endpoint_base + task_list['id'] + "/tasks"
 
             while True:
@@ -269,8 +276,11 @@ class ToDoWidget(RecycleView):
                 if tasks_response.status_code == 200:
                     json_data = json.loads(tasks_response.text)
                     json_value = json_data['value']
-                    all_tasks.extend(json_value)
-                    # print(json_value) # TODO: Remove this
+                    for task in json_value:
+                        del task['@odata.etag']
+                        task['list_id'] = task_list['id']
+                        all_tasks.append(task)
+                    # all_tasks.extend(json_value)
 
                 # TODO Find a more logical way to do this
                 if not '@odata.nextLink' in json_data:
@@ -283,19 +293,19 @@ class ToDoWidget(RecycleView):
     # Sends a patch request to Microsoft's graph API to update the task data for the specified task.
     # Also updates the task locally in terms of location, checkboxes, etc.
     # TODO: Update this to handle the new data format
-    def Update_Task(self, task):
+    def Update_Task(self, task_index):
 
         # Update remote task
-        task_endpoint = "https://graph.microsoft.com/v1.0/me/todo/lists/" + task.Get_List_Id() + "/tasks/" + task.Get_Id()
-        requests.patch(task_endpoint, data=task.Build_Json(), headers=self.msal['headers'])
+        task_endpoint = "https://graph.microsoft.com/v1.0/me/todo/lists/" + self.data[task_index]['list_id'] + "/tasks/" + self.data[task_index]['id']
+        task_data = {k: self.data[task_index][k] for k in self.data[task_index].keys() - {'list_id'}}
+        print(task_data)
+        requests.patch(task_endpoint, data=json.dumps(task_data), headers=self.msal['headers'])
+        print(task_endpoint)
 
         # Update local task
         # This section can contain any checks that need to be made any time a local task is updated
-        # TODO Update this to handle movement of tasks between complete and incomplete sections
-        print("Is task active?", task.isCompleted)
-        if task.isCompleted:
-            # Then the task needs to be in the displayed list.
-            pass
+        print("Is task active?", self.data[task_index]['status'])
+        self.refresh_from_data()
 
     # Starts a basic web server on localhost port 1080 using 
     # the custom request handler defined at the start of this file.
@@ -304,3 +314,22 @@ class ToDoWidget(RecycleView):
         server_address = ('127.0.0.1', 1080)
         httpd = server_class(server_address, handler_class)
         httpd.handle_request()
+
+    def Get_Timestamp(self):
+        return datetime.now().strftime("%m/%d/%y %H:%M:%S.%f")[:-4]
+
+    def multikeysort(self, items, columns):
+        from operator import itemgetter
+        from functools import cmp_to_key
+        comparers = [((itemgetter(col[1:].strip()), -1) if col.startswith('-') else (itemgetter(col.strip()), 1))
+                    for col in columns]
+        def cmp(x, y):
+            return (x > y) - (x < y)
+
+        def comparer(left, right):
+            comparer_iter = (
+                cmp(fn(left), fn(right)) * mult
+                for fn, mult in comparers
+            )
+            return next((result for result in comparer_iter if result), 0)
+        return sorted(items, key=cmp_to_key(comparer))

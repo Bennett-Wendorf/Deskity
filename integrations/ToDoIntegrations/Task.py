@@ -9,50 +9,39 @@ class TaskItem(RelativeLayout, RecycleDataViewBehavior):
     
     Layout set up in raspideskstats.kv
     """
-    importance = StringProperty()
-    isReminderOn = BooleanProperty()
     status = StringProperty()
     title = StringProperty()
-    createdDateTime = StringProperty()
-    lastModifiedDateTime = StringProperty()
     id = StringProperty()
     body = DictProperty()
     list_id = StringProperty()
     visible = ObjectProperty()
     isCompleted = BooleanProperty()
+    createdDateTime = StringProperty()
+    dueDateTime = None
+    lastModifiedDateTime = StringProperty()
+    importance = StringProperty()
+    isReminderOn = BooleanProperty()
     index = None
 
     def __init__(self, **kwargs):
         super(TaskItem, self).__init__(*kwargs)
-
+        if self.id != '':
+            self.list_id = self.id[:-1]
         self.children[1].bind(active=self.Box_Checked)
-
-    # def __init__(self, task_data, list_id, **kwargs):
-    #     self.importance = task_data['importance']
-    #     self.is_reminder_on = task_data['isReminderOn']
-    #     self.status = task_data['status']
-    #     self.title = task_data['title']
-    #     self.created_date_time = task_data['createdDateTime']
-    #     self.last_modified_date_time = task_data['lastModifiedDateTime']
-    #     self.id = task_data['id']
-    #     self.body = task_data['body']
-    #     self.list_id = list_id
-
-    #     super(TaskItem, self).__init__(**kwargs)
-
-    #     self.children[1].bind(active=self.Box_Checked)
 
     def Box_Checked(self, checkbox, value, *kwargs):
         # kwargs is needed here since Clock.schedule_once passes the time difference between scheduling and method call.
         # We don't really care about that time difference, so I'm just ignoring it here.
-        print(checkbox, "checked with value", value)
         old_status = self.Get_Status()
 
         if value:
             self.Set_Status('completed')
         else:
-            print("Task '", self.Get_Title(), "' is already complete.")
             self.Set_Status('notStarted')
+
+        if self.parent and self.parent.parent:
+            # self.parent.parent.refresh_from_data()
+            self.parent.parent.Update_Task(self.index)
 
         # TODO: Update the remote task
         # if old_status != task.Get_Status():
@@ -63,6 +52,10 @@ class TaskItem(RelativeLayout, RecycleDataViewBehavior):
         self.index = index
         self.status = data['status']
         return super(TaskItem, self).refresh_view_attrs(rv, index, data)
+
+    def refresh_from_data(self, *largs, **kwargs):
+        super(TaskItem, self).refresh_from_data(largs, kwargs)
+        print("Data changed in Task.py!")
 
     # TODO: get rid of these legacy functions in favor of Set_Status
     def Mark_Complete(self):
@@ -121,6 +114,9 @@ class TaskItem(RelativeLayout, RecycleDataViewBehavior):
 
     def Set_Visibility(self, visible):
         self.visible = visible
+
+    def __hash__(self):
+        return hash(self.id)
 
     def __eq__(self, other):
         if not isinstance(other, TaskItem):
