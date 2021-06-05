@@ -8,27 +8,23 @@
             spacing: 5
             BoxLayout:
                 orientation: "vertical"
-                BoxLayout:
-                    orientation: "horizontal"
-                    CheckBox:
-
+                WeatherWidget:
                 Button:
                     text: "App Location Placeholder"
             ToDoWidget:
                 id: to_do_widget
                 name: 'to_do_widget'
                 orientation: 'vertical'
-                grid_layout: tasks_list
-                ScrollView:
-                    size: self.size
-                    GridLayout:
-                        id: tasks_list
-                        cols: 1
-                        row_default_height: 30
-                        row_force_default: True
-                        size_hint_y: None
-                        spacing: 0, 10
-                        padding: 4
+                # grid_layout: tasks_list
+                sign_in_button: microsoft_sign_in
+                sign_in_label_text: 'Sign In To Microsoft'
+                viewclass: 'TaskItem'
+                RecycleBoxLayout:
+                    default_size: None, dp(56)
+                    default_size_hint: 1, None
+                    size_hint_y: None
+                    height: self.minimum_height
+                    orientation: 'vertical'
     SettingsScreen:
         id: settings_screen
         name: 'settings_screen'
@@ -45,23 +41,48 @@
                 pos_hint: {'center_x': .5, 'center_y': .6}
             Button:
                 id: microsoft_sign_in
+                visible: True
                 text: "Sign In"
                 pos_hint: {'center_x': .5, 'center_y': .5}
-                size_hint: (.2,.1)
-                on_press: root.ids.to_do_widget.Get_Access_Code_Threaded()
+                size_hint: (.2,.1) if self.visible else (0,0)
+                opacity: 1 if self.visible else 0
+                disabled: not self.visible
+                on_press: root.ids.to_do_widget.Setup_Tasks()
+
+<WeatherWidget>:
+    id: weather_widget
+    orientation: "horizontal"
+    weather_icon: weather_icon
+    AsyncImage:
+        id: weather_icon
+        source: None
+    BoxLayout:
+        orientation: "vertical"
+        Label:
+            text: str(int(root.Get_Temp())) + "°"
+            font_size: '40sp'
+        Label:
+            text: "Feels like: " + str(int(root.Get_Feels())) + "°"
 
 <TaskItem>:
     name: "Task Item"
+    visible: True
+    size_hint_y: 1 if self.visible else 0
+    opacity: 1 if self.visible else 0
+    disabled: not self.visible
     CheckBox:
         pos_hint: {'center_x': 0.05, 'center_y': 0.5}
-        size_hint: (.1,.9)
+        size_hint_x: .1
+        size_hint_y: .9 if root.visible else 0
+        label: "Test"
+        active: True if root.status == 'completed' else False
     Label:
         pos_hint: {'center_x': 0.57, 'center_y': 0.5}
-        size_hint: (.86,.9)
-        text: root.task_name
-        size_hint_y: None
+        size_hint_x: .86
+        size_hint_y: .9 if root.visible else 0
+        text: root.title
         text_size: self.width, None
-        height: self.texture_size[1]
+        # height: self.texture_size[1]
         canvas.before:
             Color:
                 rgba: 0,.1,.3,1
