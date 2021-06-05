@@ -57,17 +57,12 @@ class TaskItem(RelativeLayout, RecycleDataViewBehavior):
         super(TaskItem, self).refresh_from_data(largs, kwargs)
         print("Data changed in Task.py!")
 
-    # TODO: get rid of these legacy functions in favor of Set_Status
-    def Mark_Complete(self):
-        return self.Set_Status('completed')
-
-    def Mark_Incomplete(self):
-        return self.Set_Status('notStarted')
-
     def Get_Title(self):
+        '''Return the title of this task object.'''
         return self.title
 
     def Set_Title(self, new_title):
+        '''Set the title of this task object and return whether it was properly set.'''
         self.title = new_title
         if self.title == new_title:
             return True
@@ -75,9 +70,11 @@ class TaskItem(RelativeLayout, RecycleDataViewBehavior):
             return False
 
     def Get_Status(self):
+        '''Return the status of this task object.'''
         return self.status
 
     def Set_Status(self, new_status):
+        '''Set the status of this task to the specified status, as long as that status is a valid option.'''
         valid_statuses = ['completed', 'notStarted']
         if valid_statuses.count(new_status) > 0:
             self.status = new_status
@@ -86,18 +83,23 @@ class TaskItem(RelativeLayout, RecycleDataViewBehavior):
             return self.Get_Status() == new_status
     
     def Get_Id(self):
+        '''Return the id of this task object.'''
         return self.id
 
     def Get_List_Id(self):
+        '''Return the list id of this task object.'''
         return self.list_id
 
     def Get_Body(self):
+        '''Return the body of this task object.'''
         return self.body
 
     def Get_Importance(self):
+        '''Return the importance of this task object.'''
         return self.importance
 
     def Build_Dict(self):
+        '''Return the attributes of this task as a dictionary.'''
         return {
             'importance': self.importance, 
             'isReminderOn': self.is_reminder_on, 
@@ -110,15 +112,19 @@ class TaskItem(RelativeLayout, RecycleDataViewBehavior):
         }
 
     def Build_Json(self):
+        '''Return the attributes of this object as JSON.'''
         return json.dumps(self.Build_Dict())
 
-    def Set_Visibility(self, visible):
-        self.visible = visible
-
     def __hash__(self):
+        '''Hashes TaskItem objects using their 'id' attribute to ensure that the same objects are always hashed the same.'''
         return hash(self.id)
 
     def __eq__(self, other):
+        '''
+        Return equality for TaskItem based on the 'id' attribute. 
+        
+        If two tasks have the same id, then they are effectively the same task.
+        '''
         if not isinstance(other, TaskItem):
             # Don't attempt to compare against unrelated types
             return NotImplemented

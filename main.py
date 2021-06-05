@@ -13,16 +13,16 @@ Window.size=(480,320)
 
 #region Kivy Screens and Manager
 
-# A Main Screen object. Only one of these should be instantiated at a time. See raspideskstats.kv for layout.
 class MainScreen(Screen):
+    '''A Main Screen object. Only one of these should be instantiated at a time. See raspideskstats.kv for layout.'''
     pass
 
-# A Settings Screen object. Only one of these should be instantiated at a time. See raspideskstats.kv for layout.
 class SettingsScreen(Screen):
+    '''A Settings Screen object. Only one of these should be instantiated at a time. See raspideskstats.kv for layout.'''
     pass
 
-# A Screen Manager object. This is the root widget of the kivy hierarchy and handles switching between screens in app. See raspideskstats.kv for layout.
 class Screen_Manager(ScreenManager):
+    '''A Screen Manager object. This is the root widget of the kivy hierarchy and handles switching between screens in app. See raspideskstats.kv for layout.'''
     def __init__(self, **kwargs):
         #super(Screen_Manager, self).__init__(**kwargs)
         super().__init__()
@@ -51,8 +51,8 @@ class Screen_Manager(ScreenManager):
 
 #endregion
 
-# The main setup for the app. Instantiates the screen manager and binds the height of the tasks grid layout.
 class RaspiDeskStatsApp(App):
+    '''The main setup for the app. Instantiates the screen manager and binds the height of the tasks grid layout.'''
     def build(self):
         manager = Screen_Manager()
         # grid_layout = manager.ids.tasks_list
