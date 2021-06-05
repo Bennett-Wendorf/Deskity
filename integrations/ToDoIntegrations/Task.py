@@ -14,7 +14,6 @@ class TaskItem(RelativeLayout, RecycleDataViewBehavior):
     id = StringProperty()
     body = DictProperty()
     list_id = StringProperty()
-    visible = ObjectProperty()
     isCompleted = BooleanProperty()
     createdDateTime = StringProperty()
     dueDateTime = None
@@ -40,12 +39,7 @@ class TaskItem(RelativeLayout, RecycleDataViewBehavior):
             self.Set_Status('notStarted')
 
         if self.parent and self.parent.parent:
-            # self.parent.parent.refresh_from_data()
             self.parent.parent.Update_Task(self.index)
-
-        # TODO: Update the remote task
-        # if old_status != task.Get_Status():
-        #         self.Update_Task(task)
 
     def refresh_view_attrs(self, rv, index, data):
         ''' Catch and handle the view changes '''

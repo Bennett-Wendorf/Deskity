@@ -16,6 +16,7 @@ import time
 from datetime import datetime
 import threading
 from kivy.clock import Clock
+from functools import partial
 
 # Integration
 from integrations.ToDoIntegrations.Task import TaskItem
@@ -30,7 +31,6 @@ from kivy.properties import ObjectProperty, StringProperty
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
 from kivy.uix.button import Button 
-from functools import partial
 from kivy.uix.recycleboxlayout import RecycleBoxLayout
 from kivy.uix.recycleview import RecycleView
 from kivy.uix.recycleview.datamodel import RecycleDataModel
