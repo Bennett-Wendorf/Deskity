@@ -2,6 +2,7 @@
 
 # HTTP requests and url parsing
 import requests
+import aiohttp
 import webbrowser
 import http.server
 from urllib.parse import urlparse, parse_qs
@@ -14,6 +15,7 @@ import yaml
 import atexit
 import time
 from datetime import datetime
+import asyncio
 import threading
 from kivy.clock import Clock
 from functools import partial
@@ -172,7 +174,7 @@ class ToDoWidget(RecycleView):
         accounts = self.app.get_accounts()
         if accounts:
             # TODO: Will implement better account management later. For now, the first account found is chosen.
-            return self.app.acquire_token_silent_with_error(self.msal["scopes"], account=accounts[0])
+            return self.app.acquire_token_silent(self.msal["scopes"], account=accounts[0])
         else:
             print("No accounts were found.")
             return None
@@ -224,8 +226,9 @@ class ToDoWidget(RecycleView):
         success = self.Aquire_Access_Token()
         if success:
             if time.time() - self.last_task_update > self.task_update_threshold:
+                asyncio.run(self.Get_Tasks())
                 # TODO Add this sorting to a config file
-                self.data = self.multikeysort(self.Get_Tasks(), ['-status', 'title'])
+                self.data = self.multikeysort(self.data, ['-status', 'title'])
                 self.last_task_update = time.time()
 
     def Get_Task_Lists(self):
@@ -239,7 +242,7 @@ class ToDoWidget(RecycleView):
 
         # Leave this empty to pull from all available task lists, or specify the names of task lists that you would like to pull from.
         # TODO: add this to some kind of setting or config file
-        lists_to_use = ["Test"]
+        lists_to_use = []
 
         to_return = []
 
@@ -270,7 +273,45 @@ class ToDoWidget(RecycleView):
             print("The response did not return a success code. Returning nothing.")
             return None
 
-    def Get_Tasks(self):
+    async def Get_Tasks_From_List(self, session, list_name, list_id, all_tasks):
+        '''
+        Asynchronously get data from the specefied list and append the tasks to the 'all_tasks' list.
+        '''
+        print(f"[To Do Widget] [{self.Get_Timestamp()}] Getting tasks from list '{list_name}'")
+        # Set up the first endpoint for this list
+        endpoint = "https://graph.microsoft.com/v1.0/me/todo/lists/" + list_id + "/tasks"
+
+        while True:
+            # Pull this set of data from the specified endpoint, and allow the code to switch to another coroutine here
+            async with session.get(endpoint, headers=self.msal['headers']) as response:
+
+                # If the response came back OK
+                if response.status == 200:
+                    # Load the json from the response
+                    json_data = json.loads(await response.text())
+                    # Parse out the data from the response
+                    json_value = json_data['value']
+                    # Iterate over each task, removing @odata.etag is extra data that I don't want right now,
+                    # and deleting it keeps my task objects cleaner
+                    for task in json_value:
+                        del task['@odata.etag']
+                        # Add the list idea to the data so I can update the remote task later
+                        task['list_id'] = list_id
+                        all_tasks.append(task)
+
+                    # TODO Find a more logical way to do this
+                    # If there is no more data in this list, then break out of the loop
+                    if not '@odata.nextLink' in json_data:
+                        break
+
+                    # If this line is run, then there is more data in this list, so set up the endpoint and loop
+                    endpoint = json_data['@odata.nextLink']
+                else:
+                    # TODO: Investigate why this triggers sometimes even though all tasks seem to be there
+                    print(f"[To Do Widget] [{self.Get_Timestamp()}] Failed to get tasks from list '{list_name}'")
+        
+
+    async def Get_Tasks(self):
         '''
         Pull individual tasks from the list returned by Get_Task_Lists and return them as a single list of dicts.
         '''
@@ -281,34 +322,24 @@ class ToDoWidget(RecycleView):
             print("There was an issue getting task lists.")
             return None
 
-        tasks_endpoint_base = "https://graph.microsoft.com/v1.0/me/todo/lists/"
-
         all_tasks = []
 
-        # Pull all tasks from the chosen lists and add them to the list of all_tasks
-        for task_list in task_lists:
-            print("[To Do Widget] [{0}] Getting tasks from list '{1}'".format(self.Get_Timestamp(), task_list['displayName']))
-            endpoint = tasks_endpoint_base + task_list['id'] + "/tasks"
+        start_time = time.time()
 
-            while True:
-                tasks_response = requests.get(endpoint, headers=self.msal['headers'])
+        async with aiohttp.ClientSession() as session:
+            request_task_list = []
 
-                if tasks_response.status_code == 200:
-                    json_data = json.loads(tasks_response.text)
-                    json_value = json_data['value']
-                    for task in json_value:
-                        del task['@odata.etag']
-                        task['list_id'] = task_list['id']
-                        all_tasks.append(task)
-                    # all_tasks.extend(json_value)
+            for task_list in task_lists:
+                request_task = asyncio.create_task(self.Get_Tasks_From_List(session, task_list['displayName'], task_list['id'], all_tasks))
+                request_task_list.append(request_task)
+            await asyncio.gather(*request_task_list, return_exceptions=False)
 
-                # TODO Find a more logical way to do this
-                if not '@odata.nextLink' in json_data:
-                    break
+        duration = time.time() - start_time
+        print(f"[To Do Widget] [{self.Get_Timestamp()}] Downloaded {len(all_tasks)} tasks in {duration} seconds")
 
-                endpoint = json_data['@odata.nextLink']
-        
-        return all_tasks
+        # Set the data and make sure it is displayed on screen, in sorted order
+        self.data = all_tasks
+        self.refresh_from_data()
 
     def Update_Task(self, task_index):
         '''

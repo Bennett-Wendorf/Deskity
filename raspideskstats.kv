@@ -15,7 +15,6 @@
                 id: to_do_widget
                 name: 'to_do_widget'
                 orientation: 'vertical'
-                # grid_layout: tasks_list
                 sign_in_button: microsoft_sign_in
                 sign_in_label_text: 'Sign In To Microsoft'
                 viewclass: 'TaskItem'
@@ -82,7 +81,6 @@
         size_hint_y: .9 if root.visible else 0
         text: root.title
         text_size: self.width, None
-        # height: self.texture_size[1]
         canvas.before:
             Color:
                 rgba: 0,.1,.3,1

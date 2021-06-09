@@ -10,6 +10,7 @@ pyyaml = "*"
 python-dateutil = "*"
 pygments = "*"
 msal = "*"
+aiohttp = "*"
 
 [dev-packages]
 
