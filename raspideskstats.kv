@@ -17,6 +17,7 @@
                 orientation: 'vertical'
                 sign_in_button: microsoft_sign_in
                 sign_in_label_text: 'Sign In To Microsoft'
+                data: [x for x in self.to_do_tasks if x['isVisible']]
                 viewclass: 'TaskItem'
                 RecycleBoxLayout:
                     default_size: None, dp(56)
@@ -65,20 +66,22 @@
 
 <TaskItem>:
     name: "Task Item"
-    visible: True
-    size_hint_y: 1 if self.visible else 0
-    opacity: 1 if self.visible else 0
-    disabled: not self.visible
+    size_hint_y: 1 if self.isVisible else None
+    height: 1 if self.isVisible else 0
+    opacity: 1 if self.isVisible else 0
+    disabled: not self.isVisible
     CheckBox:
         pos_hint: {'center_x': 0.05, 'center_y': 0.5}
         size_hint_x: .1
-        size_hint_y: .9 if root.visible else 0
+        size_hint_y: .9 if root.isVisible else None
+        height: 1 if root.isVisible else '0dp'
         label: "Test"
         active: True if root.status == 'completed' else False
     Label:
         pos_hint: {'center_x': 0.57, 'center_y': 0.5}
         size_hint_x: .86
-        size_hint_y: .9 if root.visible else 0
+        size_hint_y: .9 if root.isVisible else None
+        height: 1 if root.isVisible else '0dp'
         text: root.title
         text_size: self.width, None
         canvas.before:

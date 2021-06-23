@@ -29,7 +29,7 @@ from requests_oauthlib import OAuth2Session
 import os
 
 # Kivy
-from kivy.properties import ObjectProperty, StringProperty
+from kivy.properties import ObjectProperty, StringProperty, ListProperty
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
 from kivy.uix.button import Button 
@@ -77,6 +77,8 @@ class ToDoWidget(RecycleView):
     task_update_threshold = 30000
 
     # This stores all the actual task data in dictionaries
+    to_do_tasks = ListProperty()
+
     data = []
 
     # The settings required for msal to properly authenticate the user
@@ -212,7 +214,7 @@ class ToDoWidget(RecycleView):
 
     def refresh_from_data(self, *largs, **kwargs):
         # Resort the data after the update
-        self.data = self.multikeysort(self.data, ['-status', 'title'])
+        self.to_do_tasks = self.multikeysort(self.to_do_tasks, ['-status', 'title'])
         super(ToDoWidget, self).refresh_from_data(largs, kwargs)
 
     def Setup_Tasks(self, *kwargs):
@@ -228,7 +230,7 @@ class ToDoWidget(RecycleView):
             if time.time() - self.last_task_update > self.task_update_threshold:
                 asyncio.run(self.Get_Tasks())
                 # TODO Add this sorting to a config file
-                self.data = self.multikeysort(self.data, ['-status', 'title'])
+                self.to_do_tasks = self.multikeysort(self.to_do_tasks, ['-status', 'title'])
                 self.last_task_update = time.time()
 
     def Get_Task_Lists(self):
@@ -277,7 +279,7 @@ class ToDoWidget(RecycleView):
         '''
         Asynchronously get data from the specefied list and append the tasks to the 'all_tasks' list.
         '''
-        print(f"[To Do Widget] [{self.Get_Timestamp()}] Getting tasks from list '{list_name}'")
+        print(f"[To Do Widget] [{self.Get_Timestamp()}] Pulling tasks from list '{list_name}'")
         # Set up the first endpoint for this list
         endpoint = "https://graph.microsoft.com/v1.0/me/todo/lists/" + list_id + "/tasks"
 
@@ -297,6 +299,12 @@ class ToDoWidget(RecycleView):
                         del task['@odata.etag']
                         # Add the list idea to the data so I can update the remote task later
                         task['list_id'] = list_id
+                        if task['status'] == "completed":
+                            task['isVisible'] = False
+                        else:
+                            # Incomplete tasks are always visible
+                            # TODO: Maybe add a settings toggle for this behavior?
+                            task['isVisible'] = True
                         all_tasks.append(task)
 
                     # TODO Find a more logical way to do this
@@ -310,7 +318,6 @@ class ToDoWidget(RecycleView):
                     # TODO: Investigate why this triggers sometimes even though all tasks seem to be there
                     print(f"[To Do Widget] [{self.Get_Timestamp()}] Failed to get tasks from list '{list_name}'")
         
-
     async def Get_Tasks(self):
         '''
         Pull individual tasks from the list returned by Get_Task_Lists and return them as a single list of dicts.
@@ -323,6 +330,8 @@ class ToDoWidget(RecycleView):
             return None
 
         all_tasks = []
+
+        print(f"[To Do Widget] [{self.Get_Timestamp()}] Getting tasks")
 
         start_time = time.time()
 
@@ -338,9 +347,9 @@ class ToDoWidget(RecycleView):
         print(f"[To Do Widget] [{self.Get_Timestamp()}] Downloaded {len(all_tasks)} tasks in {duration} seconds")
 
         # Set the data and make sure it is displayed on screen, in sorted order
-        self.data = all_tasks
+        self.to_do_tasks = all_tasks
         self.refresh_from_data()
-
+    
     def Update_Task(self, task_index):
         '''
         Send a patch request to Microsoft's graph API to update the task data for the specified task.
@@ -348,18 +357,32 @@ class ToDoWidget(RecycleView):
 
         Also updates the task locally in terms of sort order, etc.
         '''
-        # Update remote task
-        task_endpoint = "https://graph.microsoft.com/v1.0/me/todo/lists/" + self.data[task_index]['list_id'] + "/tasks/" + self.data[task_index]['id']
-        task_data = {k: self.data[task_index][k] for k in self.data[task_index].keys() - {'list_id'}}
-        requests.patch(task_endpoint, data=json.dumps(task_data), headers=self.msal['headers'])
+        if task_index >= len(self.to_do_tasks):
+            return
+        
+        task = self.to_do_tasks[task_index].copy()
 
         # Update local task
         # This section can contain any checks that need to be made any time a local task is updated
+        if task['status'] == "completed":
+            task['isVisible'] = False
+        else:
+            # Incomplete tasks are always visible
+            # TODO: Maybe add a settings toggle for this behavior?
+            task['isVisible'] = True
+
+        # This needs to happen so that the ListProperty for data properly picks up the change
+        self.to_do_tasks[task_index] = task
 
         # Update the recycleview with the new data. This ensures that any sorting other other changes are
         # properly displayed
         self.refresh_from_data()
 
+        # Update remote task
+        task_endpoint = "https://graph.microsoft.com/v1.0/me/todo/lists/" + task['list_id'] + "/tasks/" + task['id']
+        task_data = {k: task[k] for k in task.keys() - {'list_id', 'isVisible'}}
+        response = requests.patch(task_endpoint, data=json.dumps(task_data), headers=self.msal['headers'])
+    
     def Run_Localhost_Server(self, server_class=http.server.HTTPServer, handler_class=RequestHandler):
         '''
         Start a basic web server on localhost port 1080 using the custom request handler defined at the start of this file.

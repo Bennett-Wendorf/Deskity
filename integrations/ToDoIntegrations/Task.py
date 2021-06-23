@@ -14,12 +14,13 @@ class TaskItem(RelativeLayout, RecycleDataViewBehavior):
     id = StringProperty()
     body = DictProperty()
     list_id = StringProperty()
-    isCompleted = BooleanProperty()
+    # isCompleted = BooleanProperty()
     createdDateTime = StringProperty()
     dueDateTime = None
     lastModifiedDateTime = StringProperty()
     importance = StringProperty()
     isReminderOn = BooleanProperty()
+    isVisible = BooleanProperty()
     index = None
 
     def __init__(self, **kwargs):
@@ -31,7 +32,6 @@ class TaskItem(RelativeLayout, RecycleDataViewBehavior):
     def Box_Checked(self, checkbox, value, *kwargs):
         # kwargs is needed here since Clock.schedule_once passes the time difference between scheduling and method call.
         # We don't really care about that time difference, so I'm just ignoring it here.
-        old_status = self.Get_Status()
 
         if value:
             self.Set_Status('completed')
@@ -44,12 +44,19 @@ class TaskItem(RelativeLayout, RecycleDataViewBehavior):
     def refresh_view_attrs(self, rv, index, data):
         ''' Catch and handle the view changes '''
         self.index = index
-        self.status = data['status']
+        # self.status = data['status']
+        # self.title = data['title']
+        # self.id = data['id']
+        # self.body = data['body']
+        # self.list_id = data['list_id']
+        # self.createdDateTime = data['createdDateTime']
+        # self.lastModifiedDateTime = data['lastModifiedDateTime']
+        # self.importance = data['importance']
+        # self.isReminderOn = data['isReminderOn']
+        # self.isVisible = data['isVisible']
+        # if 'dueDateTime' in data:
+        #     self.dueDateTime = data['dueDateTime']
         return super(TaskItem, self).refresh_view_attrs(rv, index, data)
-
-    def refresh_from_data(self, *largs, **kwargs):
-        super(TaskItem, self).refresh_from_data(largs, kwargs)
-        print("Data changed in Task.py!")
 
     def Get_Title(self):
         '''Return the title of this task object.'''
@@ -73,7 +80,9 @@ class TaskItem(RelativeLayout, RecycleDataViewBehavior):
         if valid_statuses.count(new_status) > 0:
             self.status = new_status
             if self.parent and self.parent.parent:
-                self.parent.parent.data[self.index]['status'] = new_status
+                item = self.parent.parent.to_do_tasks[self.index].copy()
+                item['status'] = new_status
+                self.parent.parent.to_do_tasks[self.index] = item
             return self.Get_Status() == new_status
     
     def Get_Id(self):
