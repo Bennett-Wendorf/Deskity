@@ -116,8 +116,8 @@ class ToDoWidget(RecycleView):
 
         # If an account exists in cache, get it now. If not, don't do anything and let user sign in on settings screen.
         if(self.app.get_accounts()):
-            self.Setup_Tasks()
-            print("[To Do Widget] [{0}] Finished setting up tasks during initialization".format(self.Get_Timestamp()))
+            setup_thread = threading.Thread(target=self.Setup_Tasks)
+            setup_thread.start()
 
     #region MSAL
 
@@ -224,7 +224,8 @@ class ToDoWidget(RecycleView):
         Ensure that a valid access token is present, pull all the tasks 
         from the API, sort them correctly, and display them on screen.
         '''
-        print("[To Do Widget] [{0}] Starting task setup".format(self.Get_Timestamp()))
+        start = time.time()
+        print(f"[To Do Widget] [{self.Get_Timestamp()}] Starting task setup")
         success = self.Aquire_Access_Token()
         if success:
             if time.time() - self.last_task_update > self.task_update_threshold:
@@ -232,6 +233,8 @@ class ToDoWidget(RecycleView):
                 # TODO Add this sorting to a config file
                 self.to_do_tasks = self.multikeysort(self.to_do_tasks, ['-status', 'title'])
                 self.last_task_update = time.time()
+
+            print(f"[To Do Widget] [{self.Get_Timestamp()}] Finished setting up tasks during initialization in {time.time() - start} seconds.")
 
     def Get_Task_Lists(self):
         '''
@@ -244,7 +247,7 @@ class ToDoWidget(RecycleView):
 
         # Leave this empty to pull from all available task lists, or specify the names of task lists that you would like to pull from.
         # TODO: add this to some kind of setting or config file
-        lists_to_use = []
+        lists_to_use = ["Test", "Test 2"]
 
         to_return = []
 
@@ -354,7 +357,6 @@ class ToDoWidget(RecycleView):
         '''
         Send a patch request to Microsoft's graph API to update the task data for the specified task.
 
-
         Also updates the task locally in terms of sort order, etc.
         '''
         if task_index >= len(self.to_do_tasks):
@@ -378,10 +380,18 @@ class ToDoWidget(RecycleView):
         # properly displayed
         self.refresh_from_data()
 
-        # Update remote task
+        # Start the process of updating the task on the remote server in a new thread.
+        remote_task_thread = threading.Thread(target=self.Update_Remote_Task, args=(task,))
+        remote_task_thread.start()
+
+    def Update_Remote_Task(self, task):
+        '''
+        Updates the given task on the remote server. This is designed to be run in a thread so as to not 
+        delay the main UI when waiting for Microsoft's API.
+        '''
         task_endpoint = "https://graph.microsoft.com/v1.0/me/todo/lists/" + task['list_id'] + "/tasks/" + task['id']
         task_data = {k: task[k] for k in task.keys() - {'list_id', 'isVisible'}}
-        response = requests.patch(task_endpoint, data=json.dumps(task_data), headers=self.msal['headers'])
+        requests.patch(task_endpoint, data=json.dumps(task_data), headers=self.msal['headers'])
     
     def Run_Localhost_Server(self, server_class=http.server.HTTPServer, handler_class=RequestHandler):
         '''
