@@ -96,6 +96,7 @@ For now, there is no installer or prepackaged installation for this project. Thi
       ```python
       api_key = "<Your Key Here>"
       ```
+    * You can also try to use my API key that is already there, but that may lead to throttling issues over time with OpenWeatherMap's free API. It is preferable to get your own key.
 2. Clone the repo
    ```sh
    git clone https://github.com/Bennett-Wendorf/Kivy-Raspi-Desktop-App.git

@@ -1,6 +1,7 @@
 import requests
 import json
-import time
+from datetime import datetime
+import threading
 from kivy.uix.widget import Widget
 from kivy.uix.boxlayout import BoxLayout
 from kivy.properties import ObjectProperty
@@ -25,15 +26,22 @@ class WeatherWidget(BoxLayout):
         self.complete_url = self.base_url + "appid=" + self.api_key + "&q=" + self.city_name + "&units=" + self.units
         self.Get_Weather()
 
-        # Schedule the icon to populate itself next frame
-        Clock.schedule_once(self.Update_UI, 0)
-
         super(WeatherWidget, self).__init__(**kwargs)
+
+        # TODO Add this interval to a config
+        update_interval = 600 # seconds
+        Clock.schedule_interval(self.Start_Update_Loop, update_interval)
+
+    def Start_Update_Loop(self, dt):
+        update_thread = threading.Thread(target=self.Get_Weather)
+        update_thread.setDaemon(True)
+        update_thread.start()
 
     def Update_UI(self, *args):
         self.weather_icon.source = self.Get_Icon()
 
     def Get_Json_Data(self):
+        # TODO Handle api key errors when too many requests happen
         result = requests.get(self.complete_url)
 
         json_result = result.json()
@@ -46,6 +54,7 @@ class WeatherWidget(BoxLayout):
 
     # TODO: add some error checking here if some of this data does not exist
     def Get_Weather(self):
+        print(f"[Weather Widget] [{self.Get_Timestamp()}] Pulling weather data")
         json_data = self.Get_Json_Data()
         if json_data:
             self.location = json_data["name"]
@@ -54,34 +63,27 @@ class WeatherWidget(BoxLayout):
             self.temperature = main["temp"]
             self.feels_like = main["feels_like"]
             self.icon_url = self.image_prefix + json_data["weather"][0]["icon"] + self.image_suffix
-            self.time_stamp = json_data["dt"]
+            # Schedule the icon to populate itself next frame
+            Clock.schedule_once(self.Update_UI, 0)
 
     def Get_Temp(self):
-        self.Update_Weather()
         return self.temperature
     
     def Get_Location(self):
-        self.Update_Weather()
         return self.location
     
     def Get_Desc(self):
-        self.Update_Weather()
         return self.description
 
     def Get_Feels(self):
-        self.Update_Weather()
         return self.feels_like
 
     def Get_Icon(self):
-        self.Update_Weather()
         return self.icon_url
 
-    def Update_Weather(self):
-        current_time = int(time.time())
-        age = 601
-        if self.time_stamp:
-            age = self.time_stamp - current_time
-
-        # If data is older than 10 mins, update the weather
-        if age > 600:
-            self.Get_Weather()
+    # TODO Add this to a helper class for use accross integrations
+    def Get_Timestamp(self):
+        '''
+        Return the current timestamp in the format that is used for all output for this program.
+        '''
+        return datetime.now().strftime("%m/%d/%y %H:%M:%S.%f")[:-4]
