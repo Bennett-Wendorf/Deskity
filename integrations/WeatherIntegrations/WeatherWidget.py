@@ -7,6 +7,7 @@ from kivy.properties import ObjectProperty
 from kivy.clock import Clock
 
 class WeatherWidget(BoxLayout):
+    # TODO Add this API key to a config file
     api_key = "bbd4a506dfb2384cf85c057a674e92fb"
 
     base_url = "http://api.openweathermap.org/data/2.5/weather?"
