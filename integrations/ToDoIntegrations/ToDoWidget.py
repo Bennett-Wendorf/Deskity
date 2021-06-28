@@ -81,6 +81,8 @@ class ToDoWidget(RecycleView):
 
     data = []
 
+    delta_links = {}
+
     # The settings required for msal to properly authenticate the user
     msal = {
         'authority': "https://login.microsoftonline.com/common",
@@ -118,6 +120,10 @@ class ToDoWidget(RecycleView):
         if(self.app.get_accounts()):
             setup_thread = threading.Thread(target=self.Setup_Tasks)
             setup_thread.start()
+
+        # TODO Add this interval to a config
+        update_interval = 30 # seconds
+        Clock.schedule_interval(self.Start_Update_Loop, update_interval)
 
     #region MSAL
 
@@ -236,6 +242,62 @@ class ToDoWidget(RecycleView):
 
             print(f"[To Do Widget] [{self.Get_Timestamp()}] Finished setting up tasks during initialization in {time.time() - start} seconds.")
 
+    def Start_Update_Loop(self, dt):
+        # TODO: Consider moving this to the main python file for a unified update loop across integrations.
+        update_thread = threading.Thread(target=self.Update_All_Tasks)
+        update_thread.setDaemon(True)
+        update_thread.start()
+
+    def Update_All_Tasks(self):
+        print(f"[To Do Widget] [{self.Get_Timestamp()}] Starting tasks update.")
+        # TODO Look into a more pythonic way to do this with list comprehension
+        # or something using async functions.
+        for list_id in self.delta_links:
+            # TODO Handle the case where the token in self.msal['headers'] may not be valid anymore
+            response = requests.get(self.delta_links[list_id], headers=self.msal['headers'])
+            if response.status_code == 200:
+                json_data = json.loads(response.text)
+                # Reassign the new delta link provided by the api
+                self.delta_links[list_id] = json_data['@odata.deltaLink']
+                if json_data['value']:
+                    self.Update_Given_Tasks(json_data['value'], list_id)
+            elif response.status_code == 410:
+                print(f"[To Do Widget] [{self.Get_Timestamp()}] The entire dataset for list id '{list_id}' must be redownloaded.")
+            else:
+                print(f"[To Do Widget] [{self.Get_Timestamp()}] Something went wrong checking for updated tasks on list id '{list_id}'")
+
+    def Update_Given_Tasks(self, tasks_to_update, list_id):
+        for task in tasks_to_update:
+
+            # I can use next here since the task id's are going to be unique coming from Microsoft
+            # Return the index of an existing task in to_do_tasks, or None if 'task' is not in the list
+            local_task_index = next((i for i, item in enumerate(self.to_do_tasks) if item['id']==task['id']), None)
+
+            if '@removed' in task:
+                print(f"[To Do Widget] [{self.Get_Timestamp()}] Removed task titled '{self.to_do_tasks[local_task_index]['title']}'")
+                removed_task = self.to_do_tasks.pop(local_task_index)
+                continue
+
+            if task['status'] == "completed":
+                task['isVisible'] = False
+            else:
+                # Incomplete tasks are always visible
+                # TODO: Maybe add a settings toggle for this behavior?
+                task['isVisible'] = True
+
+            task['list_id'] = list_id
+
+            # TODO There is a small chance here that the local_task_index changes between the time I obtain it and reassign the task back
+            # Make sure to fix this issue!
+            if local_task_index != None:
+                print(f"[To Do Widget] [{self.Get_Timestamp()}] Updating existing task titled '{task['title']}'")
+                self.to_do_tasks[local_task_index] = task
+            else:
+                print(f"[To do Widget] [{self.Get_Timestamp()}] Adding new task titled '{task['title']}'")
+                self.to_do_tasks.append(task)
+        
+        self.refresh_from_data()
+
     def Get_Task_Lists(self):
         '''
         Get To Do task lists from Microsoft's graph API.
@@ -247,7 +309,7 @@ class ToDoWidget(RecycleView):
 
         # Leave this empty to pull from all available task lists, or specify the names of task lists that you would like to pull from.
         # TODO: add this to some kind of setting or config file
-        lists_to_use = ["Test", "Test 2"]
+        lists_to_use = ["Demo List"]
 
         to_return = []
 
@@ -280,11 +342,11 @@ class ToDoWidget(RecycleView):
 
     async def Get_Tasks_From_List(self, session, list_name, list_id, all_tasks):
         '''
-        Asynchronously get data from the specefied list and append the tasks to the 'all_tasks' list.
+        Asynchronously get data from the specified list and append the tasks to the 'all_tasks' list.
         '''
         print(f"[To Do Widget] [{self.Get_Timestamp()}] Pulling tasks from list '{list_name}'")
         # Set up the first endpoint for this list
-        endpoint = "https://graph.microsoft.com/v1.0/me/todo/lists/" + list_id + "/tasks"
+        endpoint = "https://graph.microsoft.com/v1.0/me/todo/lists/" + list_id + "/tasks/delta"
 
         while True:
             # Pull this set of data from the specified endpoint, and allow the code to switch to another coroutine here
@@ -299,9 +361,10 @@ class ToDoWidget(RecycleView):
                     # Iterate over each task, removing @odata.etag is extra data that I don't want right now,
                     # and deleting it keeps my task objects cleaner
                     for task in json_value:
-                        del task['@odata.etag']
+                        # del task['@odata.etag']
                         # Add the list idea to the data so I can update the remote task later
                         task['list_id'] = list_id
+                        # Set the visiblity for the new task
                         if task['status'] == "completed":
                             task['isVisible'] = False
                         else:
@@ -312,13 +375,18 @@ class ToDoWidget(RecycleView):
 
                     # TODO Find a more logical way to do this
                     # If there is no more data in this list, then break out of the loop
-                    if not '@odata.nextLink' in json_data:
+                    if not '@odata.nextLink' in json_data or not json_value:
+                        if '@odata.deltaLink' in json_data:
+                            self.delta_links[list_id] = json_data['@odata.deltaLink']
                         break
 
                     # If this line is run, then there is more data in this list, so set up the endpoint and loop
                     endpoint = json_data['@odata.nextLink']
+                elif response.status == 429:
+                    # TODO Fix throttling issue.
+                    print(f"[To Do Widget] [{self.Get_Timestamp()}] Throttling from MS Graph. Retrying request.")
+                    # time.sleep(int(response.headers['Retry-After']))
                 else:
-                    # TODO: Investigate why this triggers sometimes even though all tasks seem to be there
                     print(f"[To Do Widget] [{self.Get_Timestamp()}] Failed to get tasks from list '{list_name}'")
         
     async def Get_Tasks(self):
