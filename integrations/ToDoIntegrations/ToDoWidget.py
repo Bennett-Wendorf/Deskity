@@ -2,6 +2,7 @@
 
 # HTTP requests and url parsing
 import requests
+import aiohttp
 import webbrowser
 import http.server
 from urllib.parse import urlparse, parse_qs
@@ -14,6 +15,7 @@ import yaml
 import atexit
 import time
 from datetime import datetime
+import asyncio
 import threading
 from kivy.clock import Clock
 from functools import partial
@@ -27,7 +29,7 @@ from requests_oauthlib import OAuth2Session
 import os
 
 # Kivy
-from kivy.properties import ObjectProperty, StringProperty
+from kivy.properties import ObjectProperty, StringProperty, ListProperty
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
 from kivy.uix.button import Button 
@@ -75,7 +77,11 @@ class ToDoWidget(RecycleView):
     task_update_threshold = 30000
 
     # This stores all the actual task data in dictionaries
+    to_do_tasks = ListProperty()
+
     data = []
+
+    delta_links = {}
 
     # The settings required for msal to properly authenticate the user
     msal = {
@@ -112,8 +118,12 @@ class ToDoWidget(RecycleView):
 
         # If an account exists in cache, get it now. If not, don't do anything and let user sign in on settings screen.
         if(self.app.get_accounts()):
-            self.Setup_Tasks()
-            print("[To Do Widget] [{0}] Finished setting up tasks during initialization".format(self.Get_Timestamp()))
+            setup_thread = threading.Thread(target=self.Setup_Tasks)
+            setup_thread.start()
+
+        # TODO Add this interval to a config
+        update_interval = 30 # seconds
+        Clock.schedule_interval(self.Start_Update_Loop, update_interval)
 
     #region MSAL
 
@@ -172,7 +182,7 @@ class ToDoWidget(RecycleView):
         accounts = self.app.get_accounts()
         if accounts:
             # TODO: Will implement better account management later. For now, the first account found is chosen.
-            return self.app.acquire_token_silent_with_error(self.msal["scopes"], account=accounts[0])
+            return self.app.acquire_token_silent(self.msal["scopes"], account=accounts[0])
         else:
             print("No accounts were found.")
             return None
@@ -210,7 +220,7 @@ class ToDoWidget(RecycleView):
 
     def refresh_from_data(self, *largs, **kwargs):
         # Resort the data after the update
-        self.data = self.multikeysort(self.data, ['-status', 'title'])
+        self.to_do_tasks = self.multikeysort(self.to_do_tasks, ['-status', 'title'])
         super(ToDoWidget, self).refresh_from_data(largs, kwargs)
 
     def Setup_Tasks(self, *kwargs):
@@ -220,13 +230,73 @@ class ToDoWidget(RecycleView):
         Ensure that a valid access token is present, pull all the tasks 
         from the API, sort them correctly, and display them on screen.
         '''
-        print("[To Do Widget] [{0}] Starting task setup".format(self.Get_Timestamp()))
+        start = time.time()
+        print(f"[To Do Widget] [{self.Get_Timestamp()}] Starting task setup")
         success = self.Aquire_Access_Token()
         if success:
             if time.time() - self.last_task_update > self.task_update_threshold:
+                asyncio.run(self.Get_Tasks())
                 # TODO Add this sorting to a config file
-                self.data = self.multikeysort(self.Get_Tasks(), ['-status', 'title'])
+                self.to_do_tasks = self.multikeysort(self.to_do_tasks, ['-status', 'title'])
                 self.last_task_update = time.time()
+
+            print(f"[To Do Widget] [{self.Get_Timestamp()}] Finished setting up tasks during initialization in {time.time() - start} seconds.")
+
+    def Start_Update_Loop(self, dt):
+        # TODO: Consider moving this to the main python file for a unified update loop across integrations.
+        update_thread = threading.Thread(target=self.Update_All_Tasks)
+        update_thread.setDaemon(True)
+        update_thread.start()
+
+    def Update_All_Tasks(self):
+        print(f"[To Do Widget] [{self.Get_Timestamp()}] Starting tasks update.")
+        # TODO Look into a more pythonic way to do this with list comprehension
+        # or something using async functions.
+        for list_id in self.delta_links:
+            # TODO Handle the case where the token in self.msal['headers'] may not be valid anymore
+            response = requests.get(self.delta_links[list_id], headers=self.msal['headers'])
+            if response.status_code == 200:
+                json_data = json.loads(response.text)
+                # Reassign the new delta link provided by the api
+                self.delta_links[list_id] = json_data['@odata.deltaLink']
+                if json_data['value']:
+                    self.Update_Given_Tasks(json_data['value'], list_id)
+            elif response.status_code == 410:
+                print(f"[To Do Widget] [{self.Get_Timestamp()}] The entire dataset for list id '{list_id}' must be redownloaded.")
+            else:
+                print(f"[To Do Widget] [{self.Get_Timestamp()}] Something went wrong checking for updated tasks on list id '{list_id}'")
+
+    def Update_Given_Tasks(self, tasks_to_update, list_id):
+        for task in tasks_to_update:
+
+            # I can use next here since the task id's are going to be unique coming from Microsoft
+            # Return the index of an existing task in to_do_tasks, or None if 'task' is not in the list
+            local_task_index = next((i for i, item in enumerate(self.to_do_tasks) if item['id']==task['id']), None)
+
+            if '@removed' in task:
+                print(f"[To Do Widget] [{self.Get_Timestamp()}] Removed task titled '{self.to_do_tasks[local_task_index]['title']}'")
+                removed_task = self.to_do_tasks.pop(local_task_index)
+                continue
+
+            if task['status'] == "completed":
+                task['isVisible'] = False
+            else:
+                # Incomplete tasks are always visible
+                # TODO: Maybe add a settings toggle for this behavior?
+                task['isVisible'] = True
+
+            task['list_id'] = list_id
+
+            # TODO There is a small chance here that the local_task_index changes between the time I obtain it and reassign the task back
+            # Make sure to fix this issue!
+            if local_task_index != None:
+                print(f"[To Do Widget] [{self.Get_Timestamp()}] Updating existing task titled '{task['title']}'")
+                self.to_do_tasks[local_task_index] = task
+            else:
+                print(f"[To do Widget] [{self.Get_Timestamp()}] Adding new task titled '{task['title']}'")
+                self.to_do_tasks.append(task)
+        
+        self.refresh_from_data()
 
     def Get_Task_Lists(self):
         '''
@@ -239,7 +309,7 @@ class ToDoWidget(RecycleView):
 
         # Leave this empty to pull from all available task lists, or specify the names of task lists that you would like to pull from.
         # TODO: add this to some kind of setting or config file
-        lists_to_use = ["Test"]
+        lists_to_use = ["Demo List"]
 
         to_return = []
 
@@ -270,7 +340,56 @@ class ToDoWidget(RecycleView):
             print("The response did not return a success code. Returning nothing.")
             return None
 
-    def Get_Tasks(self):
+    async def Get_Tasks_From_List(self, session, list_name, list_id, all_tasks):
+        '''
+        Asynchronously get data from the specified list and append the tasks to the 'all_tasks' list.
+        '''
+        print(f"[To Do Widget] [{self.Get_Timestamp()}] Pulling tasks from list '{list_name}'")
+        # Set up the first endpoint for this list
+        endpoint = "https://graph.microsoft.com/v1.0/me/todo/lists/" + list_id + "/tasks/delta"
+
+        while True:
+            # Pull this set of data from the specified endpoint, and allow the code to switch to another coroutine here
+            async with session.get(endpoint, headers=self.msal['headers']) as response:
+
+                # If the response came back OK
+                if response.status == 200:
+                    # Load the json from the response
+                    json_data = json.loads(await response.text())
+                    # Parse out the data from the response
+                    json_value = json_data['value']
+                    # Iterate over each task, removing @odata.etag is extra data that I don't want right now,
+                    # and deleting it keeps my task objects cleaner
+                    for task in json_value:
+                        # del task['@odata.etag']
+                        # Add the list idea to the data so I can update the remote task later
+                        task['list_id'] = list_id
+                        # Set the visiblity for the new task
+                        if task['status'] == "completed":
+                            task['isVisible'] = False
+                        else:
+                            # Incomplete tasks are always visible
+                            # TODO: Maybe add a settings toggle for this behavior?
+                            task['isVisible'] = True
+                        all_tasks.append(task)
+
+                    # TODO Find a more logical way to do this
+                    # If there is no more data in this list, then break out of the loop
+                    if not '@odata.nextLink' in json_data or not json_value:
+                        if '@odata.deltaLink' in json_data:
+                            self.delta_links[list_id] = json_data['@odata.deltaLink']
+                        break
+
+                    # If this line is run, then there is more data in this list, so set up the endpoint and loop
+                    endpoint = json_data['@odata.nextLink']
+                elif response.status == 429:
+                    # TODO Fix throttling issue.
+                    print(f"[To Do Widget] [{self.Get_Timestamp()}] Throttling from MS Graph. Retrying request.")
+                    # time.sleep(int(response.headers['Retry-After']))
+                else:
+                    print(f"[To Do Widget] [{self.Get_Timestamp()}] Failed to get tasks from list '{list_name}'")
+        
+    async def Get_Tasks(self):
         '''
         Pull individual tasks from the list returned by Get_Task_Lists and return them as a single list of dicts.
         '''
@@ -281,54 +400,67 @@ class ToDoWidget(RecycleView):
             print("There was an issue getting task lists.")
             return None
 
-        tasks_endpoint_base = "https://graph.microsoft.com/v1.0/me/todo/lists/"
-
         all_tasks = []
 
-        # Pull all tasks from the chosen lists and add them to the list of all_tasks
-        for task_list in task_lists:
-            print("[To Do Widget] [{0}] Getting tasks from list '{1}'".format(self.Get_Timestamp(), task_list['displayName']))
-            endpoint = tasks_endpoint_base + task_list['id'] + "/tasks"
+        print(f"[To Do Widget] [{self.Get_Timestamp()}] Getting tasks")
 
-            while True:
-                tasks_response = requests.get(endpoint, headers=self.msal['headers'])
+        start_time = time.time()
 
-                if tasks_response.status_code == 200:
-                    json_data = json.loads(tasks_response.text)
-                    json_value = json_data['value']
-                    for task in json_value:
-                        del task['@odata.etag']
-                        task['list_id'] = task_list['id']
-                        all_tasks.append(task)
-                    # all_tasks.extend(json_value)
+        async with aiohttp.ClientSession() as session:
+            request_task_list = []
 
-                # TODO Find a more logical way to do this
-                if not '@odata.nextLink' in json_data:
-                    break
+            for task_list in task_lists:
+                request_task = asyncio.create_task(self.Get_Tasks_From_List(session, task_list['displayName'], task_list['id'], all_tasks))
+                request_task_list.append(request_task)
+            await asyncio.gather(*request_task_list, return_exceptions=False)
 
-                endpoint = json_data['@odata.nextLink']
-        
-        return all_tasks
+        duration = time.time() - start_time
+        print(f"[To Do Widget] [{self.Get_Timestamp()}] Downloaded {len(all_tasks)} tasks in {duration} seconds")
 
+        # Set the data and make sure it is displayed on screen, in sorted order
+        self.to_do_tasks = all_tasks
+        self.refresh_from_data()
+    
     def Update_Task(self, task_index):
         '''
         Send a patch request to Microsoft's graph API to update the task data for the specified task.
 
-
         Also updates the task locally in terms of sort order, etc.
         '''
-        # Update remote task
-        task_endpoint = "https://graph.microsoft.com/v1.0/me/todo/lists/" + self.data[task_index]['list_id'] + "/tasks/" + self.data[task_index]['id']
-        task_data = {k: self.data[task_index][k] for k in self.data[task_index].keys() - {'list_id'}}
-        requests.patch(task_endpoint, data=json.dumps(task_data), headers=self.msal['headers'])
+        if task_index >= len(self.to_do_tasks):
+            return
+        
+        task = self.to_do_tasks[task_index].copy()
 
         # Update local task
         # This section can contain any checks that need to be made any time a local task is updated
+        if task['status'] == "completed":
+            task['isVisible'] = False
+        else:
+            # Incomplete tasks are always visible
+            # TODO: Maybe add a settings toggle for this behavior?
+            task['isVisible'] = True
+
+        # This needs to happen so that the ListProperty for data properly picks up the change
+        self.to_do_tasks[task_index] = task
 
         # Update the recycleview with the new data. This ensures that any sorting other other changes are
         # properly displayed
         self.refresh_from_data()
 
+        # Start the process of updating the task on the remote server in a new thread.
+        remote_task_thread = threading.Thread(target=self.Update_Remote_Task, args=(task,))
+        remote_task_thread.start()
+
+    def Update_Remote_Task(self, task):
+        '''
+        Updates the given task on the remote server. This is designed to be run in a thread so as to not 
+        delay the main UI when waiting for Microsoft's API.
+        '''
+        task_endpoint = "https://graph.microsoft.com/v1.0/me/todo/lists/" + task['list_id'] + "/tasks/" + task['id']
+        task_data = {k: task[k] for k in task.keys() - {'list_id', 'isVisible'}}
+        requests.patch(task_endpoint, data=json.dumps(task_data), headers=self.msal['headers'])
+    
     def Run_Localhost_Server(self, server_class=http.server.HTTPServer, handler_class=RequestHandler):
         '''
         Start a basic web server on localhost port 1080 using the custom request handler defined at the start of this file.
@@ -339,6 +471,7 @@ class ToDoWidget(RecycleView):
         httpd = server_class(server_address, handler_class)
         httpd.handle_request()
 
+    # TODO Add this to a helper class for use accross integrations
     def Get_Timestamp(self):
         '''
         Return the current timestamp in the format that is used for all output for this program.
