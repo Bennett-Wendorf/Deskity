@@ -37,6 +37,9 @@ from kivy.uix.recycleboxlayout import RecycleBoxLayout
 from kivy.uix.recycleview import RecycleView
 from kivy.uix.recycleview.datamodel import RecycleDataModel
 
+# Settings
+from dynaconf_settings import settings
+
 #endregion
 
 # The authorization code returned by Microsoft
@@ -70,11 +73,6 @@ class ToDoWidget(RecycleView):
 
     # The instance of the Public Client Application from MSAL. This is assigned in __init__
     app = None
-
-    last_task_update = 100000
-
-    # TODO: Add this to a config file
-    task_update_threshold = 30000
 
     # This stores all the actual task data in dictionaries
     to_do_tasks = ListProperty()
@@ -121,9 +119,7 @@ class ToDoWidget(RecycleView):
             setup_thread = threading.Thread(target=self.Setup_Tasks)
             setup_thread.start()
 
-        # TODO Add this interval to a config
-        update_interval = 30 # seconds
-        Clock.schedule_interval(self.Start_Update_Loop, update_interval)
+        Clock.schedule_interval(self.Start_Update_Loop, settings.To_Do_Widget.get('update_interval', 30))
 
     #region MSAL
 
@@ -173,7 +169,7 @@ class ToDoWidget(RecycleView):
             # self.sign_in_button.visible = False # TODO: Re-enable this
             return True
         else:
-            print("Something went wrong and no token was obtained!")
+            print(f"[To Do Widget] [{self.Get_Timestamp()}] Something went wrong and no token was obtained!")
             return False
 
 
@@ -184,7 +180,7 @@ class ToDoWidget(RecycleView):
             # TODO: Will implement better account management later. For now, the first account found is chosen.
             return self.app.acquire_token_silent(self.msal["scopes"], account=accounts[0])
         else:
-            print("No accounts were found.")
+            print(f"[To Do Widget] [{self.Get_Timestamp()}] No accounts were found.")
             return None
 
     def Aquire_Auth_Code(self, settings):
@@ -220,7 +216,7 @@ class ToDoWidget(RecycleView):
 
     def refresh_from_data(self, *largs, **kwargs):
         # Resort the data after the update
-        self.to_do_tasks = self.multikeysort(self.to_do_tasks, ['-status', 'title'])
+        self.to_do_tasks = self.multikeysort(self.to_do_tasks, settings.To_Do_Widget.get('task_sort_order', ['-status', 'title']))
         super(ToDoWidget, self).refresh_from_data(largs, kwargs)
 
     def Setup_Tasks(self, *kwargs):
@@ -234,11 +230,9 @@ class ToDoWidget(RecycleView):
         print(f"[To Do Widget] [{self.Get_Timestamp()}] Starting task setup")
         success = self.Aquire_Access_Token()
         if success:
-            if time.time() - self.last_task_update > self.task_update_threshold:
-                asyncio.run(self.Get_Tasks())
-                # TODO Add this sorting to a config file
-                self.to_do_tasks = self.multikeysort(self.to_do_tasks, ['-status', 'title'])
-                self.last_task_update = time.time()
+            asyncio.run(self.Get_Tasks())
+            self.to_do_tasks = self.multikeysort(self.to_do_tasks, settings.To_Do_Widget.get('task_sort_order', ['-status', 'title']))
+            self.last_task_update = time.time()
 
             print(f"[To Do Widget] [{self.Get_Timestamp()}] Finished setting up tasks during initialization in {time.time() - start} seconds.")
 
@@ -279,11 +273,10 @@ class ToDoWidget(RecycleView):
                 continue
 
             if task['status'] == "completed":
+                # TODO in-app toggle for this
                 task['isVisible'] = False
             else:
-                # Incomplete tasks are always visible
-                # TODO: Maybe add a settings toggle for this behavior?
-                task['isVisible'] = True
+                task['isVisible'] = settings.To_Do_Widget.get('incomplete_task_visibility', True)
 
             task['list_id'] = list_id
 
@@ -307,9 +300,8 @@ class ToDoWidget(RecycleView):
         '''
         print("[To Do Widget] [{0}] Getting task lists".format(self.Get_Timestamp()))
 
-        # Leave this empty to pull from all available task lists, or specify the names of task lists that you would like to pull from.
-        # TODO: add this to some kind of setting or config file
-        lists_to_use = ["Demo List"]
+        # Pull the specified lists from the config file. If that setting does not exist, default to an empty list that will pull all tasks
+        lists_to_use = settings.To_Do_Widget.get('lists_to_use', [])
 
         to_return = []
 
@@ -358,19 +350,15 @@ class ToDoWidget(RecycleView):
                     json_data = json.loads(await response.text())
                     # Parse out the data from the response
                     json_value = json_data['value']
-                    # Iterate over each task, removing @odata.etag is extra data that I don't want right now,
-                    # and deleting it keeps my task objects cleaner
                     for task in json_value:
-                        # del task['@odata.etag']
                         # Add the list idea to the data so I can update the remote task later
                         task['list_id'] = list_id
                         # Set the visiblity for the new task
                         if task['status'] == "completed":
+                            # TODO in-app toggle for this
                             task['isVisible'] = False
                         else:
-                            # Incomplete tasks are always visible
-                            # TODO: Maybe add a settings toggle for this behavior?
-                            task['isVisible'] = True
+                            task['isVisible'] = settings.To_Do_Widget.get('incomplete_task_visibility', True)
                         all_tasks.append(task)
 
                     # TODO Find a more logical way to do this
@@ -434,12 +422,11 @@ class ToDoWidget(RecycleView):
 
         # Update local task
         # This section can contain any checks that need to be made any time a local task is updated
+        # TODO in-app toggle for this
         if task['status'] == "completed":
             task['isVisible'] = False
         else:
-            # Incomplete tasks are always visible
-            # TODO: Maybe add a settings toggle for this behavior?
-            task['isVisible'] = True
+            task['isVisible'] = settings.To_Do_Widget.get('incomplete_task_visibility', True)
 
         # This needs to happen so that the ListProperty for data properly picks up the change
         self.to_do_tasks[task_index] = task

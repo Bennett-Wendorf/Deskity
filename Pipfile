@@ -11,6 +11,7 @@ python-dateutil = "*"
 pygments = "*"
 msal = "*"
 aiohttp = "*"
+dynaconf = "*"
 
 [dev-packages]
 

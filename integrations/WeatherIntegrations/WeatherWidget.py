@@ -6,31 +6,25 @@ from kivy.uix.widget import Widget
 from kivy.uix.boxlayout import BoxLayout
 from kivy.properties import ObjectProperty
 from kivy.clock import Clock
+from dynaconf_settings import settings
 
 class WeatherWidget(BoxLayout):
-    # TODO Add this API key to a config file
-    api_key = "bbd4a506dfb2384cf85c057a674e92fb"
-
     base_url = "http://api.openweathermap.org/data/2.5/weather?"
 
     image_prefix = "http://openweathermap.org/img/wn/"
     image_suffix = "@2x.png"
 
-    units = "imperial"
-
     weather_icon = ObjectProperty()
 
     def __init__(self, **kwargs):
-        #TODO: This will need to be set somehow, probably in configuration files
-        self.city_name = "Stevens Point"
-        self.complete_url = self.base_url + "appid=" + self.api_key + "&q=" + self.city_name + "&units=" + self.units
+        # TODO Display city name in this widget
+        # TODO Display units in this widget
+        self.complete_url = self.base_url + "appid=" + settings.Weather_Widget.get('api_key', 'bbd4a506dfb2384cf85c057a674e92fb') + "&q=" + settings.Weather_Widget.get('city_name', 'New York') + "&units=" + settings.Weather_Widget.get('units', 'imperial')
         self.Get_Weather()
 
         super(WeatherWidget, self).__init__(**kwargs)
 
-        # TODO Add this interval to a config
-        update_interval = 600 # seconds
-        Clock.schedule_interval(self.Start_Update_Loop, update_interval)
+        Clock.schedule_interval(self.Start_Update_Loop, settings.Weather_Widget.get('update_interval', 600))
 
     def Start_Update_Loop(self, dt):
         update_thread = threading.Thread(target=self.Get_Weather)
