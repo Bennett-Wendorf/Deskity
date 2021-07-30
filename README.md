@@ -91,17 +91,11 @@ For now, there is no installer or prepackaged installation for this project. Thi
 
 ### Installation
 
-1. Get a free API Key for weather data at [openweathermap.org/api](https://openweathermap.org/api).
-    * Add this key in `integrations/WeatherIntegrations/WeatherWidget.py`
-      ```python
-      api_key = "<Your Key Here>"
-      ```
-    * You can also try to use my API key that is already there, but that may lead to throttling issues over time with OpenWeatherMap's free API. It is preferable to get your own key.
-2. Clone the repo
+1. Clone the repo
    ```sh
    git clone https://github.com/Bennett-Wendorf/Kivy-Raspi-Desktop-App.git
    ```
-3. Install dependencies
+2. Install dependencies
     * Use pipenv to install the requirements in a virtual environment
       ```sh
       pipenv install
@@ -111,7 +105,22 @@ For now, there is no installer or prepackaged installation for this project. Thi
       ```sh
       pip install <requirements from Pipfile>
       ```
-4. Run the app
+3. Make a copy of the `TEMPLATE.secrets.toml` file and rename the copy to `.secrets.toml`. This is where you will add settings that shouldn't be pushed to a repository, such as API keys.
+3. Get a free API Key for weather data at [openweathermap.org/api](https://openweathermap.org/api).
+    * Add this key in `.secrets.toml` under the setting for `api_key` in the `Weather_Widget` category.
+      ```toml
+      [Weather_Widget]
+        api_key = "<Your Key Here>"
+      ```
+    * You can also try to use my API key by removing this setting from the file, but that may lead to throttling issues over time with OpenWeatherMap's free API. It is preferable to get your own key.
+4. Set up your app with Microsoft Graph. For the timebeing, I do not know if my `app_id` will work for all users, but feel free to test it by removing that setting in `.secrets.toml`. Otherwise, you will need to set up a free account and register the app yourself. Check out [Microsoft's page](https://docs.microsoft.com/en-us/azure/active-directory/develop/quickstart-register-app) for more help with this. 
+    * You should get an `app_id` from this, which should also be added in `.secrets.toml` under the setting for `app_id` in the `To_Do_Widget` category.
+      ```toml
+      [To_Do_Widget]
+        app_id = "<Your App Id Here>"
+      ```
+5. Modify any other settings you would like in the `settings.toml` file. What is listed in that file already is also the default if that particular setting is not specified, with the exception of the `lists_to_use` setting, which defaults to an empty list.
+6. Run the app
     * If pipenv was used:
       ```sh
       pipenv run python main.py
