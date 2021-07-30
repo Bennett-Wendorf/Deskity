@@ -6,31 +6,29 @@ from kivy.uix.widget import Widget
 from kivy.uix.boxlayout import BoxLayout
 from kivy.properties import ObjectProperty
 from kivy.clock import Clock
+from dynaconf_settings import settings
+from helpers.ArgHandler import Get_Args
+
+from logger.AppLogger import build_logger
+logger = build_logger(logger_name="Weather Widget", debug=Get_Args().verbose)
 
 class WeatherWidget(BoxLayout):
-    # TODO Add this API key to a config file
-    api_key = "bbd4a506dfb2384cf85c057a674e92fb"
-
     base_url = "http://api.openweathermap.org/data/2.5/weather?"
 
     image_prefix = "http://openweathermap.org/img/wn/"
     image_suffix = "@2x.png"
 
-    units = "imperial"
-
     weather_icon = ObjectProperty()
 
     def __init__(self, **kwargs):
-        #TODO: This will need to be set somehow, probably in configuration files
-        self.city_name = "Stevens Point"
-        self.complete_url = self.base_url + "appid=" + self.api_key + "&q=" + self.city_name + "&units=" + self.units
+        # TODO Display city name in this widget
+        # TODO Display units in this widget
+        self.complete_url = self.base_url + "appid=" + settings.Weather_Widget.get('api_key', 'bbd4a506dfb2384cf85c057a674e92fb') + "&q=" + settings.Weather_Widget.get('city_name', 'New York') + "&units=" + settings.Weather_Widget.get('units', 'imperial')
         self.Get_Weather()
 
         super(WeatherWidget, self).__init__(**kwargs)
 
-        # TODO Add this interval to a config
-        update_interval = 600 # seconds
-        Clock.schedule_interval(self.Start_Update_Loop, update_interval)
+        Clock.schedule_interval(self.Start_Update_Loop, settings.Weather_Widget.get('update_interval', 600))
 
     def Start_Update_Loop(self, dt):
         update_thread = threading.Thread(target=self.Get_Weather)
@@ -54,7 +52,7 @@ class WeatherWidget(BoxLayout):
 
     # TODO: add some error checking here if some of this data does not exist
     def Get_Weather(self):
-        print(f"[Weather Widget] [{self.Get_Timestamp()}] Pulling weather data")
+        logger.info("Pulling weather data")
         json_data = self.Get_Json_Data()
         if json_data:
             self.location = json_data["name"]
@@ -80,10 +78,3 @@ class WeatherWidget(BoxLayout):
 
     def Get_Icon(self):
         return self.icon_url
-
-    # TODO Add this to a helper class for use accross integrations
-    def Get_Timestamp(self):
-        '''
-        Return the current timestamp in the format that is used for all output for this program.
-        '''
-        return datetime.now().strftime("%m/%d/%y %H:%M:%S.%f")[:-4]

@@ -1,3 +1,11 @@
+import os
+os.environ["KIVY_NO_ARGS"]="1"
+
+from helpers.ArgHandler import Parse_Args, Get_Args
+
+from logger.AppLogger import build_logger
+logger = build_logger(debug=Get_Args().verbose)
+
 from kivy.app import App
 from kivy.config import Config
 from kivy.core.window import Window
@@ -31,7 +39,7 @@ class Screen_Manager(ScreenManager):
     # Handles key presses for switching to main and settings screens.
     def On_Key_Press(self, *args):
         key_pressed = args[3]
-        print ("Got key event. Key pressed was: ", key_pressed)
+        logger.debug(f"Got key event. Key pressed was: {key_pressed}")
         if(key_pressed == 's'):
             self.Switch_To_Settings()
         elif(key_pressed == 'm'):
@@ -41,13 +49,13 @@ class Screen_Manager(ScreenManager):
     def Switch_To_Main(self):
         self.transition.direction = 'down'
         self.current = 'main_screen'
-        print("Attempting Switch_To_Main()")
+        logger.debug("Attempting Switch_To_Main()")
     
     # Switch to settings screen from any other screen.
     def Switch_To_Settings(self):
         self.transition.direction = 'up'
         self.current = 'settings_screen'
-        print("Attempting Switch_To_Settings()")
+        logger.debug("Atempting Switch_To_Settings()")
 
 #endregion
 
@@ -55,12 +63,9 @@ class RaspiDeskStatsApp(App):
     '''The main setup for the app. Instantiates the screen manager and binds the height of the tasks grid layout.'''
     def build(self):
         manager = Screen_Manager()
-        # grid_layout = manager.ids.tasks_list
-        # grid_layout.bind(minimum_height=grid_layout.setter('height'))
         return manager
 
 # Run the app when this file is run.
 if __name__ == '__main__':
+    Parse_Args()
     RaspiDeskStatsApp().run()
-    # root = Screen_Manager()
-    # runTouchApp(root)
