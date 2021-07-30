@@ -7,6 +7,10 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.properties import ObjectProperty
 from kivy.clock import Clock
 from dynaconf_settings import settings
+from helpers.ArgHandler import Get_Args
+
+from logger.AppLogger import build_logger
+logger = build_logger(logger_name="Weather Widget", debug=Get_Args().verbose)
 
 class WeatherWidget(BoxLayout):
     base_url = "http://api.openweathermap.org/data/2.5/weather?"
@@ -48,7 +52,7 @@ class WeatherWidget(BoxLayout):
 
     # TODO: add some error checking here if some of this data does not exist
     def Get_Weather(self):
-        print(f"[Weather Widget] [{self.Get_Timestamp()}] Pulling weather data")
+        logger.info("Pulling weather data")
         json_data = self.Get_Json_Data()
         if json_data:
             self.location = json_data["name"]
@@ -74,10 +78,3 @@ class WeatherWidget(BoxLayout):
 
     def Get_Icon(self):
         return self.icon_url
-
-    # TODO Add this to a helper class for use accross integrations
-    def Get_Timestamp(self):
-        '''
-        Return the current timestamp in the format that is used for all output for this program.
-        '''
-        return datetime.now().strftime("%m/%d/%y %H:%M:%S.%f")[:-4]

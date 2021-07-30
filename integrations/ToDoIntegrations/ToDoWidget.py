@@ -11,6 +11,13 @@ from urllib.parse import urlparse, parse_qs
 import json
 import yaml
 
+from helpers.ArgHandler import Get_Args
+
+# Logging
+from logger.AppLogger import build_logger
+# Build the logger object, using the argument for verbosity as the setting for debug log level
+logger = build_logger(logger_name="To Do Widget", debug=Get_Args().verbose)
+
 # Scheduling and threading
 import atexit
 import time
@@ -60,6 +67,7 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
         authorization_response = code[2:len(code)-2]
         if self.path == '/':
             self.path = 'index.html'
+        logger.debug("Got response from HTTP server.")
         return http.server.SimpleHTTPRequestHandler.do_GET(self)
 
 class ToDoWidget(RecycleView):
@@ -68,8 +76,10 @@ class ToDoWidget(RecycleView):
     '''
     # Load the authentication_settings.yml file
     # Note: this file is not tracked by github, so it will need to be created before running
-    stream = open('integrations/ToDoIntegrations/microsoft_authentication_settings.yml', 'r')
-    settings = yaml.safe_load(stream)
+    # stream = open('integrations/ToDoIntegrations/microsoft_authentication_settings.yml', 'r')
+    # settings = yaml.safe_load(stream)
+    # if settings:
+    #     logger.debug("Setting successfully loaded ")
 
     # The instance of the Public Client Application from MSAL. This is assigned in __init__
     app = None
@@ -112,7 +122,7 @@ class ToDoWidget(RecycleView):
         cache = self.Deserialize_Cache("integrations/ToDoIntegrations/microsoft_cache.bin")
 
         # Instantiate the Public Client App
-        self.app = PublicClientApplication(self.settings['app_id'], authority=self.msal['authority'], token_cache=cache)
+        self.app = PublicClientApplication(settings.To_Do_Widget.get('app_id', '565467a5-8f81-4e12-8c8d-e6ec0a0c4290'), authority=self.msal['authority'], token_cache=cache)
 
         # If an account exists in cache, get it now. If not, don't do anything and let user sign in on settings screen.
         if(self.app.get_accounts()):
@@ -128,7 +138,7 @@ class ToDoWidget(RecycleView):
         cache = SerializableTokenCache()
         if os.path.exists(cache_path):
             cache.deserialize(open(cache_path, "r").read())
-            print("[To Do Widget] [{0}] Reading MSAL token cache".format(self.Get_Timestamp()))
+            logger.info("Reading MSAL token cache")
 
         # Register a function with atexit to make sure the cache is written to just before the application terminates.
         atexit.register(lambda:
@@ -169,7 +179,7 @@ class ToDoWidget(RecycleView):
             # self.sign_in_button.visible = False # TODO: Re-enable this
             return True
         else:
-            print(f"[To Do Widget] [{self.Get_Timestamp()}] Something went wrong and no token was obtained!")
+            logger.error("Something went wrong and no token was obtained")
             return False
 
 
@@ -180,7 +190,7 @@ class ToDoWidget(RecycleView):
             # TODO: Will implement better account management later. For now, the first account found is chosen.
             return self.app.acquire_token_silent(self.msal["scopes"], account=accounts[0])
         else:
-            print(f"[To Do Widget] [{self.Get_Timestamp()}] No accounts were found.")
+            logger.info("No accounts were found in the cache. Reauthenticating...")
             return None
 
     def Aquire_Auth_Code(self, settings):
@@ -227,14 +237,15 @@ class ToDoWidget(RecycleView):
         from the API, sort them correctly, and display them on screen.
         '''
         start = time.time()
-        print(f"[To Do Widget] [{self.Get_Timestamp()}] Starting task setup")
+        logger.info("Starting task update")
         success = self.Aquire_Access_Token()
         if success:
             asyncio.run(self.Get_Tasks())
             self.to_do_tasks = self.multikeysort(self.to_do_tasks, settings.To_Do_Widget.get('task_sort_order', ['-status', 'title']))
             self.last_task_update = time.time()
 
-            print(f"[To Do Widget] [{self.Get_Timestamp()}] Finished setting up tasks during initialization in {time.time() - start} seconds.")
+            logger.info("Finished setting up tasks during initialization")
+            logger.debug(f"This task setup took {time.time() - start} seconds.")
 
     def Start_Update_Loop(self, dt):
         # TODO: Consider moving this to the main python file for a unified update loop across integrations.
@@ -243,7 +254,7 @@ class ToDoWidget(RecycleView):
         update_thread.start()
 
     def Update_All_Tasks(self):
-        print(f"[To Do Widget] [{self.Get_Timestamp()}] Starting tasks update.")
+        logger.info("Starting tasks update")
         # TODO Look into a more pythonic way to do this with list comprehension
         # or something using async functions.
         for list_id in self.delta_links:
@@ -256,9 +267,9 @@ class ToDoWidget(RecycleView):
                 if json_data['value']:
                     self.Update_Given_Tasks(json_data['value'], list_id)
             elif response.status_code == 410:
-                print(f"[To Do Widget] [{self.Get_Timestamp()}] The entire dataset for list id '{list_id}' must be redownloaded.")
+                logger.warning(f"The entire dataset for list id '{list_id}' must be redownloaded")
             else:
-                print(f"[To Do Widget] [{self.Get_Timestamp()}] Something went wrong checking for updated tasks on list id '{list_id}'")
+                logger.error(f"Something went wrong checking for updated tasks on list id '{list_id}'")
 
     def Update_Given_Tasks(self, tasks_to_update, list_id):
         for task in tasks_to_update:
@@ -268,7 +279,7 @@ class ToDoWidget(RecycleView):
             local_task_index = next((i for i, item in enumerate(self.to_do_tasks) if item['id']==task['id']), None)
 
             if '@removed' in task:
-                print(f"[To Do Widget] [{self.Get_Timestamp()}] Removed task titled '{self.to_do_tasks[local_task_index]['title']}'")
+                logger.info(f"Removed task titled '{self.to_do_tasks[local_task_index]['title']}'")
                 removed_task = self.to_do_tasks.pop(local_task_index)
                 continue
 
@@ -283,10 +294,10 @@ class ToDoWidget(RecycleView):
             # TODO There is a small chance here that the local_task_index changes between the time I obtain it and reassign the task back
             # Make sure to fix this issue!
             if local_task_index != None:
-                print(f"[To Do Widget] [{self.Get_Timestamp()}] Updating existing task titled '{task['title']}'")
+                logger.info(f"Updating existing task titled '{task['title']}'")
                 self.to_do_tasks[local_task_index] = task
             else:
-                print(f"[To do Widget] [{self.Get_Timestamp()}] Adding new task titled '{task['title']}'")
+                logger.info(f"Adding new task titled '{task['title']}'")
                 self.to_do_tasks.append(task)
         
         self.refresh_from_data()
@@ -298,7 +309,7 @@ class ToDoWidget(RecycleView):
         NOTE: This is usually only run by the Get_Tasks method, there should
         be no need to get task lists without pulling the tasks from them.
         '''
-        print("[To Do Widget] [{0}] Getting task lists".format(self.Get_Timestamp()))
+        logger.debug("Getting task lists")
 
         # Pull the specified lists from the config file. If that setting does not exist, default to an empty list that will pull all tasks
         lists_to_use = settings.To_Do_Widget.get('lists_to_use', [])
@@ -326,17 +337,17 @@ class ToDoWidget(RecycleView):
             else:
                 to_return.extend(lists)
             
-            print("[To Do Widget] [{0}] Obtained task lists successfully".format(self.Get_Timestamp()))
+            logger.info("Obtained task lists successfully")
             return to_return
         else:
-            print("The response did not return a success code. Returning nothing.")
+            logger.error("The response did not return a success code. Returning nothing.")
             return None
 
     async def Get_Tasks_From_List(self, session, list_name, list_id, all_tasks):
         '''
         Asynchronously get data from the specified list and append the tasks to the 'all_tasks' list.
         '''
-        print(f"[To Do Widget] [{self.Get_Timestamp()}] Pulling tasks from list '{list_name}'")
+        logger.info(f"Pulling tasks from list '{list_name}'")
         # Set up the first endpoint for this list
         endpoint = "https://graph.microsoft.com/v1.0/me/todo/lists/" + list_id + "/tasks/delta"
 
@@ -372,10 +383,10 @@ class ToDoWidget(RecycleView):
                     endpoint = json_data['@odata.nextLink']
                 elif response.status == 429:
                     # TODO Fix throttling issue.
-                    print(f"[To Do Widget] [{self.Get_Timestamp()}] Throttling from MS Graph. Retrying request.")
+                    logger.warning("Throttling from MS Graph. Retrying request.")
                     # time.sleep(int(response.headers['Retry-After']))
                 else:
-                    print(f"[To Do Widget] [{self.Get_Timestamp()}] Failed to get tasks from list '{list_name}'")
+                    logger.error(f"Failed to get tasks from list '{list_name}'")
         
     async def Get_Tasks(self):
         '''
@@ -385,12 +396,12 @@ class ToDoWidget(RecycleView):
         task_lists = self.Get_Task_Lists()
 
         if not task_lists:
-            print("There was an issue getting task lists.")
+            logger.error("There was an issue getting task lists")
             return None
 
         all_tasks = []
 
-        print(f"[To Do Widget] [{self.Get_Timestamp()}] Getting tasks")
+        logger.debug("Getting tasks")
 
         start_time = time.time()
 
@@ -402,8 +413,7 @@ class ToDoWidget(RecycleView):
                 request_task_list.append(request_task)
             await asyncio.gather(*request_task_list, return_exceptions=False)
 
-        duration = time.time() - start_time
-        print(f"[To Do Widget] [{self.Get_Timestamp()}] Downloaded {len(all_tasks)} tasks in {duration} seconds")
+        logger.debug(f"Downloaded {len(all_tasks)} tasks in {time.time() - start_time} seconds")
 
         # Set the data and make sure it is displayed on screen, in sorted order
         self.to_do_tasks = all_tasks
@@ -457,13 +467,6 @@ class ToDoWidget(RecycleView):
         server_address = ('127.0.0.1', 1080)
         httpd = server_class(server_address, handler_class)
         httpd.handle_request()
-
-    # TODO Add this to a helper class for use accross integrations
-    def Get_Timestamp(self):
-        '''
-        Return the current timestamp in the format that is used for all output for this program.
-        '''
-        return datetime.now().strftime("%m/%d/%y %H:%M:%S.%f")[:-4]
 
     def multikeysort(self, items, columns):
         '''
