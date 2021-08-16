@@ -1,8 +1,5 @@
 #region Imports
 
-# TODO: remove this
-import logging
-
 # HTTP requests and url parsing
 import requests
 import aiohttp
@@ -15,6 +12,8 @@ import json
 import yaml
 
 from helpers.ArgHandler import Get_Args
+from helpers.APIError import APIError
+from helpers.Helpers import multikeysort
 
 # Logging
 from logger.AppLogger import build_logger
@@ -64,16 +63,13 @@ class ToDoWidget(RecycleView):
     sign_in_button = ObjectProperty()
     
     def __init__(self, **kwargs):
-
         super(ToDoWidget, self).__init__(**kwargs)
-
         MSALHelper.Setup_Msal(self)
-
-        Clock.schedule_interval(self.Start_Update_Loop, settings.To_Do_Widget.get('update_interval', 30))
+        Clock.schedule_interval(self.Start_Local_Update_Process, settings.To_Do_Widget.get('update_interval', 30))
 
     def refresh_from_data(self, *largs, **kwargs):
-        # Resort the data after the update
-        self.to_do_tasks = self.multikeysort(self.to_do_tasks, settings.To_Do_Widget.get('task_sort_order', ['-status', 'title']))
+        # Resort the data after information updates
+        self.to_do_tasks = multikeysort(self.to_do_tasks, settings.To_Do_Widget.get('task_sort_order', ['-status', 'title']))
         super(ToDoWidget, self).refresh_from_data(largs, kwargs)
 
     def Setup_Tasks(self, *kwargs):
@@ -84,76 +80,19 @@ class ToDoWidget(RecycleView):
         from the API, sort them correctly, and display them on screen.
         '''
         start = time.time()
-        logger.info("Starting task update")
-        success = MSALHelper.Aquire_Access_Token()
-        if success:
-            asyncio.run(self.Get_Tasks())
-            self.to_do_tasks = self.multikeysort(self.to_do_tasks, settings.To_Do_Widget.get('task_sort_order', ['-status', 'title']))
-            self.last_task_update = time.time()
-
-            logger.info("Finished setting up tasks during initialization")
-            logger.debug(f"This task setup took {time.time() - start} seconds.")
-
-    def Start_Update_Loop(self, dt):
-        # TODO: Consider moving this to the main python file for a unified update loop across integrations.
-        update_thread = threading.Thread(target=self.Update_All_Tasks)
-        update_thread.setDaemon(True)
-        update_thread.start()
-
-    def Update_All_Tasks(self):
-        logger.info("Starting tasks update")
-        # TODO Look into a more pythonic way to do this with list comprehension
-        # or something using async functions.
-        for list_id in self.delta_links:
-            # TODO Handle the case where the token in self.msal['headers'] may not be valid anymore
-            response = requests.get(self.delta_links[list_id], headers=MSALHelper.Get_Msal_Headers())
-            if response.status_code == 200:
-                json_data = json.loads(response.text)
-                # Reassign the new delta link provided by the api
-                self.delta_links[list_id] = json_data['@odata.deltaLink']
-                if json_data['value']:
-                    self.Update_Given_Tasks(json_data['value'], list_id)
-            elif response.status_code == 410:
-                logger.warning(f"The entire dataset for list id '{list_id}' must be redownloaded")
-            else:
-                logger.error(f"Something went wrong checking for updated tasks on list id '{list_id}'")
-
-    def Update_Given_Tasks(self, tasks_to_update, list_id):
-        for task in tasks_to_update:
-
-            # I can use next here since the task id's are going to be unique coming from Microsoft
-            # Return the index of an existing task in to_do_tasks, or None if 'task' is not in the list
-            local_task_index = next((i for i, item in enumerate(self.to_do_tasks) if item['id']==task['id']), None)
-
-            if '@removed' in task:
-                logger.info(f"Removed task titled '{self.to_do_tasks[local_task_index]['title']}'")
-                removed_task = self.to_do_tasks.pop(local_task_index)
-                continue
-
-            if task['status'] == "completed":
-                # TODO in-app toggle for this
-                task['isVisible'] = False
-            else:
-                task['isVisible'] = settings.To_Do_Widget.get('incomplete_task_visibility', True)
-
-            task['list_id'] = list_id
-
-            # TODO There is a small chance here that the local_task_index changes between the time I obtain it and reassign the task back
-            # Make sure to fix this issue!
-            if local_task_index != None:
-                logger.info(f"Updating existing task titled '{task['title']}'")
-                self.to_do_tasks[local_task_index] = task
-            else:
-                logger.info(f"Adding new task titled '{task['title']}'")
-                self.to_do_tasks.append(task)
+        logger.info("Starting task setup")
         
-        self.refresh_from_data()
+        asyncio.run(self.Get_All_Tasks())
+        self.to_do_tasks = multikeysort(self.to_do_tasks, settings.To_Do_Widget.get('task_sort_order', ['-status', 'title']))
+
+        logger.info("Finished setting up tasks during initialization")
+        logger.debug(f"This task setup took {time.time() - start} seconds.")
 
     def Get_Task_Lists(self):
         '''
         Get To Do task lists from Microsoft's graph API.
 
-        NOTE: This is usually only run by the Get_Tasks method, there should
+        NOTE: This is usually only run by the Get_All_Tasks method, there should
         be no need to get task lists without pulling the tasks from them.
         '''
         logger.debug("Getting task lists")
@@ -186,9 +125,8 @@ class ToDoWidget(RecycleView):
             logger.info("Obtained task lists successfully")
             return to_return
         else:
-            # TODO: replace logging with thrown exception
             logger.error("The response did not return a success code. Returning nothing.")
-            return None
+            raise APIError("The response did not return a success code. Returning nothing.")
 
     async def Get_Tasks_From_List(self, session, list_name, list_id, all_tasks):
         '''
@@ -235,12 +173,12 @@ class ToDoWidget(RecycleView):
                 else:
                     logger.error(f"Failed to get tasks from list '{list_name}'")
         
-    async def Get_Tasks(self):
+    async def Get_All_Tasks(self):
         '''
         Pull individual tasks from the list returned by Get_Task_Lists and return them as a single list of dicts.
         '''
         # TODO: Consider moving this to MSALHelper
-        MSALHelper.Set_Msal_Headers({'Content-Type':'application/json', 'Authorization':'Bearer {0}'.format(MSALHelper.Get_Msal_Access_Token())})
+        MSALHelper.Set_Msal_Headers({'Content-Type':'application/json', 'Authorization':'Bearer {0}'.format(MSALHelper.Aquire_Access_Token())})
         task_lists = self.Get_Task_Lists()
 
         if not task_lists:
@@ -294,10 +232,12 @@ class ToDoWidget(RecycleView):
         self.refresh_from_data()
 
         # Start the process of updating the task on the remote server in a new thread.
-        remote_task_thread = threading.Thread(target=self.Update_Remote_Task, args=(task,))
+        # This is in a new thread so that the UI can update immediately, while the request
+        # to Microsoft takes a small amount of time.
+        remote_task_thread = threading.Thread(target=self.Push_Updated_Task, args=(task,))
         remote_task_thread.start()
 
-    def Update_Remote_Task(self, task):
+    def Push_Updated_Task(self, task):
         '''
         Updates the given task on the remote server. This is designed to be run in a thread so as to not 
         delay the main UI when waiting for Microsoft's API.
@@ -306,24 +246,63 @@ class ToDoWidget(RecycleView):
         task_data = {k: task[k] for k in task.keys() - {'list_id', 'isVisible'}}
         requests.patch(task_endpoint, data=json.dumps(task_data), headers=MSALHelper.Get_Msal_Headers())
 
-    def multikeysort(self, items, columns):
+    def Start_Local_Update_Process(self, dt):
         '''
-        Return the sorted list of dictionaries 'items' sorted in order by the keys in 'columns'. 
-        
-        These keys are specified as a list of strings in 'columns'. A '-' can be added to the 
-        front of each key to reverse the sort order.
+        Start a new thread for updating the local task information from the server.
         '''
-        from operator import itemgetter
-        from functools import cmp_to_key
-        comparers = [((itemgetter(col[1:].strip()), -1) if col.startswith('-') else (itemgetter(col.strip()), 1))
-                    for col in columns]
-        def cmp(x, y):
-            return (x > y) - (x < y)
+        update_thread = threading.Thread(target=self.Locally_Update_All_Tasks)
+        update_thread.setDaemon(True)
+        update_thread.start()
 
-        def comparer(left, right):
-            comparer_iter = (
-                cmp(fn(left), fn(right)) * mult
-                for fn, mult in comparers
-            )
-            return next((result for result in comparer_iter if result), 0)
-        return sorted(items, key=cmp_to_key(comparer))
+    def Locally_Update_All_Tasks(self):
+        '''
+        Make a request to the delta endpoint on Microsoft graph and update 
+        the local tasks as specified.
+        '''
+        logger.info("Starting tasks update")
+        # TODO Look into a more pythonic way to do this with list comprehension
+        # or something using async functions.
+        for list_id in self.delta_links:
+            # TODO Handle the case where the token in self.msal['headers'] may not be valid anymore
+            response = requests.get(self.delta_links[list_id], headers=MSALHelper.Get_Msal_Headers())
+            if response.status_code == 200:
+                json_data = json.loads(response.text)
+                # Reassign the new delta link provided by the api
+                self.delta_links[list_id] = json_data['@odata.deltaLink']
+                if json_data['value']:
+                    for task in json_data['value']:
+                        # I can use next here since the task id's are going to be unique coming from Microsoft;
+                        # I don't have to worry about multiple local tasks with the same id
+                        # Return the index of an existing task in to_do_tasks, or None if 'task' is not in the list
+                        local_task_index = next((i for i, item in enumerate(self.to_do_tasks) if item['id']==task['id']), None)
+
+                        if '@removed' in task:
+                            logger.info(f"Removed task titled '{self.to_do_tasks[local_task_index]['title']}'")
+                            # Remove the task from the local list and then move on to the next item in the list
+                            self.to_do_tasks.pop(local_task_index)
+                            continue
+
+                        # Set task visibility based on new completion status
+                        if task['status'] == "completed":
+                            # TODO in-app toggle for this
+                            task['isVisible'] = False
+                        else:
+                            task['isVisible'] = settings.To_Do_Widget.get('incomplete_task_visibility', True)
+
+                        task['list_id'] = list_id
+
+                        # TODO There is a small chance here that the local_task_index changes between the time I obtain it and reassign the task back
+                        # Make sure to fix this issue!
+                        if local_task_index != None:
+                            logger.info(f"Updating existing task titled '{task['title']}'")
+                            self.to_do_tasks[local_task_index] = task
+                        else:
+                            logger.info(f"Adding new task titled '{task['title']}'")
+                            self.to_do_tasks.append(task)
+                    
+                    self.refresh_from_data()
+            elif response.status_code == 410:
+                # TODO: Figure out what to do here
+                logger.warning(f"The entire dataset for list id '{list_id}' must be redownloaded")
+            else:
+                logger.error(f"Something went wrong checking for updated tasks on list id '{list_id}'")

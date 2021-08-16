@@ -15,6 +15,8 @@ logger = logging.getLogger("To Do Widget")
 
 from dynaconf_settings import settings
 
+from helpers.APIError import APIError
+
 #endregion
 
 # The authorization code returned by Microsoft
@@ -75,10 +77,9 @@ def Setup_Msal(to_do_widget_instance):
     # Instantiate the Public Client App
     app = PublicClientApplication(settings.To_Do_Widget.get('app_id', '565467a5-8f81-4e12-8c8d-e6ec0a0c4290'), authority="https://login.microsoftonline.com/common", token_cache=cache)
 
-    # If an account exists in cache, get it now. If not, don't do anything and let user sign in on settings screen.
-    if(app.get_accounts()):
-        setup_thread = threading.Thread(target=to_do_widget_instance.Setup_Tasks)
-        setup_thread.start()
+    # Begin setting up tasks in the to do widget
+    setup_thread = threading.Thread(target=to_do_widget_instance.Setup_Tasks)
+    setup_thread.start()
 
 def Get_Msal_Headers():
     '''Return the headers needed to make API calls to Microsoft'''
@@ -89,11 +90,6 @@ def Set_Msal_Headers(new_headers):
     '''Change the headers that are needed to make API calls to Microsoft'''
     global headers
     headers = new_headers
-
-def Get_Msal_Access_Token():
-    '''Return the access token'''
-    global access_token
-    return access_token
 
 def Deserialize_Cache(cache_path):
     '''Create the cache object, deserialize it for use, and register it to be reserialized before the application quits.'''
@@ -111,7 +107,6 @@ def Deserialize_Cache(cache_path):
 
     return cache
 
-# Gets access token however it is needed and returns that token
 def Aquire_Access_Token():
     '''
     If there is an access token in the cache, get it and obtain an authorization code using it. 
@@ -123,6 +118,7 @@ def Aquire_Access_Token():
 
     if(access_token == None):
 
+        # Since I don't have a token, check the cache to see if I can get one that way
         result = Pull_From_Token_Cache()
 
         if (result == None):
@@ -137,14 +133,10 @@ def Aquire_Access_Token():
         # Strip down the result and convert it to a string to get the final access token
         access_token = str(result['access_token'])
     
-    if access_token != None:
-        # self.sign_in_label_text = "You are signed in to Microsoft" # TODO: Re-enable this
-        # self.sign_in_button.visible = False # TODO: Re-enable this
-        return True
-    else:
-        logger.error("Something went wrong and no token was obtained")
-        return False
-
+    if access_token == None:
+        raise APIError("Something went wrong and no Microsoft access token was obtained")
+    
+    return access_token
 
 def Pull_From_Token_Cache():
     '''If there is a vaild account in the cache, obtain it and then use it to get and return an access token.'''
