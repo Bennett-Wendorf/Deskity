@@ -191,4 +191,4 @@ Project Link: [https://github.com/Bennett-Wendorf/Kivy-Raspi-Desktop-App](https:
 [issues-shield]: https://img.shields.io/github/issues/bennett-wendorf/kivy-raspi-desktop-app.svg?style=flat&color=red
 [issues-url]: https://github.com/bennett-wendorf/kivy-raspi-desktop-app/issues
 [license-shield]: https://img.shields.io/github/license/bennett-wendorf/kivy-raspi-desktop-app.svg?style=flat
-[license-url]: https://github.com/bennett-wendorf/kivy-raspi-desktop-app/blob/master/LICENSE.txt
+[license-url]: https://github.com/bennett-wendorf/kivy-raspi-desktop-app/blob/master/LICENSE
