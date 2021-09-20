@@ -29,7 +29,7 @@
 [Weather_Widget]
     # The city to pull weather data for.
     # Defaults to New York if not specified.
-    city_name = "Stevens Point"
+    city_name = "La Crosse"
 
     # The temperature units to display.
     # Possible values are 'standard' for Kelvin, 'imperial' for Fahrenheit, and 'metric' for Celsius.

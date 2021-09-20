@@ -12,6 +12,7 @@ pygments = "*"
 msal = "*"
 aiohttp = "*"
 dynaconf = "*"
+kivymd = "*"
 
 [dev-packages]
 

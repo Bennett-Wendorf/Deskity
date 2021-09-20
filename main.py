@@ -13,6 +13,9 @@ from integrations.ToDoIntegrations.ToDoWidget import ToDoWidget
 from integrations.WeatherIntegrations.WeatherWidget import WeatherWidget
 from kivy.uix.boxlayout import BoxLayout
 
+from kivy.cache import Cache
+from kivy.atlas import Atlas
+
 # Set the default size of the window to 480x320, the size of my 3.5" touchscreen module for a Raspberry Pi
 Config.set('graphics', 'width', '480')
 Config.set('graphics', 'height', '320')
@@ -26,6 +29,7 @@ class MainBoxLayout(BoxLayout):
 class RaspiDeskStatsApp(App):
     '''The main setup for the app. Instantiates the screen manager and binds the height of the tasks grid layout.'''
     def build(self):
+        super(RaspiDeskStatsApp, self).build()
         return MainBoxLayout()
 
 # Run the app when this file is run.

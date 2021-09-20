@@ -1,9 +1,12 @@
 from kivy.properties import ObjectProperty, StringProperty, BooleanProperty, DictProperty
 from kivy.uix.relativelayout import RelativeLayout
 from kivy.uix.recycleview.views import RecycleDataViewBehavior
+from kivymd.uix.behaviors import HoverBehavior
 import json
 
-class TaskItem(RelativeLayout, RecycleDataViewBehavior):
+from kivy.core.window import Window
+
+class TaskItem(RelativeLayout, RecycleDataViewBehavior, HoverBehavior):
     """
     A task item object. Holds info about the task it contains and sets up a layout with that information. 
     
@@ -40,6 +43,13 @@ class TaskItem(RelativeLayout, RecycleDataViewBehavior):
 
         if self.parent and self.parent.parent:
             self.parent.parent.Update_Task(self.index)
+
+    def on_enter(self, *args):
+        self.children[1].background_checkbox_normal ="atlas://res/icons/custom_atlas/blue_check"
+        print("Entering", self.title)
+
+    def on_leave(self, *args):
+        self.children[1].background_checkbox_normal ="atlas://res/icons/custom_atlas/blue_check_unchecked"
 
     def refresh_view_attrs(self, rv, index, data):
         ''' Catch and handle the view changes '''

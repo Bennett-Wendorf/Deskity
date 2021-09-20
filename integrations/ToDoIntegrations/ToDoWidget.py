@@ -102,31 +102,42 @@ class ToDoWidget(RecycleView):
 
         to_return = []
 
+        # This specifies how many lists to pull on every request. For some reason, Microsoft's API
+        # will only give an odata.nextLink url if this is specified. If not, it will only return 16
+        # lists, even if there are more.
+        pull_per_request = 20
+
         # Set up endpoint and headers for request
-        lists_endpoint = "https://graph.microsoft.com/v1.0/me/todo/lists"
+        lists_endpoint = "https://graph.microsoft.com/v1.0/me/todo/lists?$top=" + str(pull_per_request)
 
-        # Run the get request to the endpoint
-        lists_response = requests.get(lists_endpoint, headers=MSALHelper.Get_Msal_Headers())
+        while True:
+            # Run the get request to the endpoint
+            lists_response = requests.get(lists_endpoint, headers=MSALHelper.Get_Msal_Headers())
 
-        # If the request was a success, return the JSON data, else print an error code
-        if(lists_response.status_code == 200):
-            json_data = json.loads(lists_response.text)
-            # This is a list of task lists available
-            lists = json_data['value']
+            # If the request was a success, return the JSON data, else print an error code
+            if(lists_response.status_code == 200):
+                json_data = json.loads(lists_response.text)
+                # This is a list of task lists available
+                lists = json_data['value']
 
-            if lists_to_use:
-                for task_list in lists:
-                    if lists_to_use.count(task_list['displayName']) > 0:
-                        # Then this list is in my list of lists to use and I should be pulling data from it
-                        to_return.append(task_list)
+                if lists_to_use:
+                    for task_list in lists:
+                        if lists_to_use.count(task_list['displayName']) > 0:
+                            # Then this list is in my list of lists to use and I should be pulling data from it
+                            to_return.append(task_list)
+                else:
+                    to_return.extend(lists)
+                
+                if not '@odata.nextLink' in json_data:
+                    # Then I got all the tasks needed, so I can return
+                    logger.info("Obtained task lists successfully")
+                    logger.debug(f"Pulled {len(to_return)} lists")
+                    return to_return
+                else:
+                    lists_endpoint = json_data['@odata.nextLink']
             else:
-                to_return.extend(lists)
-            
-            logger.info("Obtained task lists successfully")
-            return to_return
-        else:
-            logger.error("The response did not return a success code. Returning nothing.")
-            raise APIError("The response did not return a success code. Returning nothing.")
+                logger.error("The response did not return a success code. Returning nothing.")
+                raise APIError("The response did not return a success code. Returning nothing.")
 
     async def Get_Tasks_From_List(self, session, list_name, list_id, all_tasks):
         '''
