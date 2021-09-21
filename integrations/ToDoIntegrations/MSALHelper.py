@@ -125,9 +125,11 @@ def Aquire_Access_Token():
             # Then there was no token in the cache
 
             # Get auth code
+            logger.debug("Aquiring a new auth code")
             authCode = Aquire_Auth_Code(settings)
 
             # Aquire token from Microsoft with auth code and scopes from above
+            logger.debug("Getting a token from Microsoft using the auth code")
             result = app.acquire_token_by_authorization_code(authCode, scopes=scopes, redirect_uri=redirect_uri)
         
         # Strip down the result and convert it to a string to get the final access token
@@ -156,12 +158,14 @@ def Aquire_Auth_Code(settings):
     global authorization_response, scopes, redirect_uri
 
     # Begin localhost web server in a new thread to handle the get request that will come from Microsoft
+    logger.debug("Starting localhost server to obtain auth code automatically")
     webServerThread = threading.Thread(target=Run_Localhost_Server)
     webServerThread.setDaemon(True)
     webServerThread.start()
 
     # Begins OAuth session with app_id, scopes, and redirect_uri from yml
-    aadAuth = OAuth2Session(settings.To_Do_Widget.get('app_id'), scope=scopes, redirect_uri=redirect_uri)
+    logger.debug("Starting an OAuth2 Session with the app_id")
+    aadAuth = OAuth2Session(settings.To_Do_Widget.get('app_id', '565467a5-8f81-4e12-8c8d-e6ec0a0c4290'), scope=scopes, redirect_uri=redirect_uri)
 
     # Obtain final login url from the OAuth session
     sign_in_url, state = aadAuth.authorization_url("https://login.microsoftonline.com/common/oauth2/v2.0/authorize")
