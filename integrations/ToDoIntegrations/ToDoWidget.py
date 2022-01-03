@@ -9,7 +9,6 @@ from urllib.parse import urlparse, parse_qs
 
 # Data formats
 import json
-import yaml
 
 from helpers.ArgHandler import Get_Args
 from helpers.APIError import APIError

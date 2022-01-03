@@ -6,7 +6,6 @@ name = "pypi"
 [packages]
 kivy = "*"
 requests-oauthlib = "*"
-pyyaml = "*"
 python-dateutil = "*"
 pygments = "*"
 msal = "*"
