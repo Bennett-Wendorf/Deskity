@@ -1,3 +1,4 @@
+# #:kivy !
 <MainBoxLayout>:
     orientation: "horizontal"
     padding: 3
@@ -52,10 +53,10 @@
         Color:
             rgba: .8, .8, .8, 1
         Line:
-            points: 0,0,self.width,0
+            points: self.x, self.y, self.width, self.y
             width:1 
     CheckBox:
-        id: "checkbox"
+        id: checkbox
         pos_hint: {'center_x': 0.07, 'center_y': 0.5}
         size_hint_x: .1
         size_hint_y: .9 if root.isVisible else None
