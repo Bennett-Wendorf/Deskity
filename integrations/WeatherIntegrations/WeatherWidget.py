@@ -23,7 +23,7 @@ class WeatherWidget(BoxLayout):
     def __init__(self, **kwargs):
         # TODO Display city name in this widget
         # TODO Display units in this widget
-        self.complete_url = self.base_url + "appid=" + settings.Weather_Widget.get('api_key', 'bbd4a506dfb2384cf85c057a674e92fb') + "&q=" + settings.Weather_Widget.get('city_name', 'New York') + "&units=" + settings.Weather_Widget.get('units', 'imperial')
+        self.complete_url = self.base_url + "appid=" + settings.Weather_Widget.api_key + "&q=" + settings.Weather_Widget.get('city_name', 'New York') + "&units=" + settings.Weather_Widget.get('units', 'imperial')
         self.Get_Weather()
 
         super(WeatherWidget, self).__init__(**kwargs)

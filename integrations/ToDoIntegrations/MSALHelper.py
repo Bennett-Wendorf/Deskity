@@ -19,6 +19,8 @@ from helpers.APIError import APIError
 
 #endregion
 
+app_id = "565467a5-8f81-4e12-8c8d-e6ec0a0c4290"
+
 # The authorization code returned by Microsoft
 # This needs to be global to allow the request handler to obtain it and pass it back to Aquire_Auth_Code()
 authorization_response = None
@@ -75,7 +77,7 @@ def Setup_Msal(to_do_widget_instance):
     cache = Deserialize_Cache("integrations/ToDoIntegrations/microsoft_cache.bin")
 
     # Instantiate the Public Client App
-    app = PublicClientApplication(settings.To_Do_Widget.get('app_id', '565467a5-8f81-4e12-8c8d-e6ec0a0c4290'), authority="https://login.microsoftonline.com/common", token_cache=cache)
+    app = PublicClientApplication(settings.To_Do_Widget.get('app_id', app_id), authority="https://login.microsoftonline.com/common", token_cache=cache)
 
     # Begin setting up tasks in the to do widget
     setup_thread = threading.Thread(target=to_do_widget_instance.Setup_Tasks)
@@ -165,7 +167,7 @@ def Aquire_Auth_Code(settings):
 
     # Begins OAuth session with app_id, scopes, and redirect_uri from yml
     logger.debug("Starting an OAuth2 Session with the app_id")
-    aadAuth = OAuth2Session(settings.To_Do_Widget.get('app_id', '565467a5-8f81-4e12-8c8d-e6ec0a0c4290'), scope=scopes, redirect_uri=redirect_uri)
+    aadAuth = OAuth2Session(settings.To_Do_Widget.get('app_id', app_id), scope=scopes, redirect_uri=redirect_uri)
 
     # Obtain final login url from the OAuth session
     sign_in_url, state = aadAuth.authorization_url("https://login.microsoftonline.com/common/oauth2/v2.0/authorize")

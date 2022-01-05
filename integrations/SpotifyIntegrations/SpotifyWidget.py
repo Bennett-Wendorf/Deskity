@@ -70,6 +70,6 @@ class SpotifyWidget(RelativeLayout):
 
     def Spotify_Auth(self):
         return spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=settings.Spotify_Widget.client_id,
-                                                          client_secret=settings.Spotify_Widget.client_secret, # TODO: Add fallback here
+                                                          client_secret=settings.Spotify_Widget.client_secret,
                                                           redirect_uri='http://localhost:8888/redirect',
                                                           scope='user-library-read streaming app-remote-control user-read-playback-state'))

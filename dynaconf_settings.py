@@ -21,10 +21,15 @@ settings = Dynaconf(
         Validator('To_Do_Widget.incomplete_task_visibility', is_type_of=bool),
         Validator('To_Do_Widget.lists_to_use', is_type_of=list),
         Validator('To_Do_Widget.task_sort_order', is_type_of=list),
+        Validator('To_Do_Widget.task_sort_order', condition=check_sort_order),
+        Validator('To_Do_Widget.app_id', is_type_of=str, len_eq=36),
         Validator('Weather_Widget', must_exist=True),
         Validator('Weather_Widget.city_name', is_type_of=str),
         Validator('Weather_Widget.units', is_type_of=str),
         Validator('Weather_Widget.update_interval', is_type_of=int),
-        Validator('To_Do_Widget.task_sort_order', condition=check_sort_order)
+        Validator('Weather_Widget.api_key', must_exist=True, is_type_of=str, len_eq=32),
+        Validator('Spotify_Widget', must_exist=True),
+        Validator('Spotify_Widget.client_id', must_exist=True, is_type_of=str, len_eq=32),
+        Validator('Spotify_Widget.client_secret', must_exist=True, is_type_of=str, len_eq=32)
     ],
 )
