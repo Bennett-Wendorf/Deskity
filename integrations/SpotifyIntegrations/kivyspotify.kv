@@ -1,0 +1,40 @@
+# #:kivy !
+<SpotifyWidget>:
+    AsyncImage:
+        id: album_art
+        source: 'res/icons/Spotify_Icon_RGB_Green.png'
+        size: self.width, self.height
+        size_hint: 0.3, 0.3
+        pos_hint: {'center_x': 0.27, 'center_y': 0.6}
+    Image:
+        id: spotify_logo
+        source: 'res/icons/Spotify_Icon_RGB_White.png'
+        size: self.width, self.height
+        size_hint: 0.15, 0.15
+        pos_hint: {'x': 0.85, 'y': 0.85}
+    Label:
+        id: song_title
+        text: root.current_title
+        font_size: '25sp'
+        pos_hint: {'center_x': 0.7, 'center_y': 0.7}
+    Label:
+        id: album 
+        text: root.current_album
+        font_size: '15sp'
+        pos_hint: {'center_x': 0.7, 'center_y': 0.6}
+    Label:
+        id: artist
+        text: root.current_artist
+        font_size: '15sp'
+        pos_hint: {'center_x': 0.7, 'center_y': 0.5}
+    MDIconButton:
+        icon: 'pause' if root.playing else 'play'
+        icon_size: "64sp"
+        pos_hint: {'center_x': 0.7, 'center_y': 0.3}
+        on_release: root.Toggle_Playback()
+    ProgressBar:
+        id: playback_progress
+        pos_hint: {'center_x': 0.5, 'center_y': 0.1}
+        size_hint_x: 0.95
+        max: root.track_duration
+        value: root.curr_playback_time

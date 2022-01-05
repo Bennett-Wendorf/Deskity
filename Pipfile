@@ -12,6 +12,7 @@ msal = "*"
 aiohttp = "*"
 dynaconf = "*"
 kivymd = "*"
+spotipy = "*"
 
 [dev-packages]
 

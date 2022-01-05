@@ -6,11 +6,12 @@ from helpers.ArgHandler import Parse_Args, Get_Args
 from logger.AppLogger import build_logger
 logger = build_logger(debug=Get_Args().verbose)
 
-from kivy.app import App
+from kivymd.app import MDApp
 from kivy.config import Config
 from kivy.core.window import Window
 from integrations.ToDoIntegrations.ToDoWidget import ToDoWidget
 from integrations.WeatherIntegrations.WeatherWidget import WeatherWidget
+from integrations.SpotifyIntegrations.SpotifyWidget import SpotifyWidget
 from kivy.uix.boxlayout import BoxLayout
 
 from kivy.cache import Cache
@@ -26,9 +27,11 @@ class MainBoxLayout(BoxLayout):
     def __init__(self):
         super().__init__()
 
-class RaspiDeskStatsApp(App):
+class RaspiDeskStatsApp(MDApp):
     '''The main setup for the app. Instantiates the screen manager and binds the height of the tasks grid layout.'''
     def build(self):
+        self.theme_cls.primary_palette = "Cyan"
+        self.theme_cls.theme_style = "Dark"
         super(RaspiDeskStatsApp, self).build()
         return MainBoxLayout()
 
