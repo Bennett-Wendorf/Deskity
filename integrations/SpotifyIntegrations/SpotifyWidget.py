@@ -5,6 +5,12 @@ import threading
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 from dynaconf_settings import settings
+from helpers.ArgHandler import Get_Args
+
+# Logging
+from logger.AppLogger import build_logger
+# Build the logger object, using the argument for verbosity as the setting for debug log level
+logger = build_logger(logger_name="Spotify Widget", debug=Get_Args().verbose)
 
 from kivy.lang import Builder
 
@@ -41,7 +47,7 @@ class SpotifyWidget(RelativeLayout):
         Clock.schedule_interval(self.Start_Update_Loop, 5)
 
     def Get_Playing(self):
-        print("Running Get_Playing")
+        logger.info("Running Get_Playing")
         current = self.spotify.current_playback()
         if(current is not None):
             self.playing = current['is_playing']
@@ -53,7 +59,7 @@ class SpotifyWidget(RelativeLayout):
             self.ids.album_art.source = current['item']['album']['images'][1]['url']
 
     def Toggle_Playback(self):
-        print("Running Toggle_Playback")
+        logger.info("Running Toggle_Playback")
         try:
             if(self.playing):
                 self.spotify.pause_playback()
