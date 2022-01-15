@@ -20,7 +20,7 @@
         data: [x for x in self.to_do_tasks if x['isVisible']]
         viewclass: 'TaskItem'
         RecycleBoxLayout:
-            default_size: None, dp(56)
+            default_size: None, dp(40)
             default_size_hint: 1, None
             size_hint_y: None
             height: self.minimum_height
@@ -33,21 +33,33 @@
     AsyncImage:
         id: weather_icon
         source: None
-    BoxLayout:
-        orientation: "vertical"
-        Label:
-            text: str(int(root.Get_Temp())) + "°"
-            font_size: '40sp'
-        Label:
-            text: "Feels like: " + str(int(root.Get_Feels())) + "°"
-            font_size: '20sp'
+        pos_hint: {'center_x': 0.175, 'center_y': 0.5}
+        size_hint: 0.35, 0.4
+    Label:
+        text: str(int(root.Get_Temp())) + "°"
+        # font_size: '40sp'
+        text_size: self.width, self.height
+        font_size: self.height * 0.5
+        valign: 'center'
+        halign: 'center'
+        size_hint: 0.65, 0.55
+        pos_hint: {'center_x': 0.675, 'center_y': 0.65}
+    Label:
+        text: "Feels like: " + str(int(root.Get_Feels())) + "°"
+        # font_size: '20sp'
+        text_size: self.width, self.height
+        font_size: self.height * 0.5
+        valign: 'center'
+        halign: 'center'
+        size_hint: 0.65, 0.2
+        pos_hint: {'center_x': 0.675, 'center_y': 0.25}
 
 <TaskItem>:
     name: "Task Item"
-    size_hint_y: 1 if self.isVisible else None
-    height: 1 if self.isVisible else 0
-    opacity: 1 if self.isVisible else 0
-    disabled: not self.isVisible
+    # size_hint_y: 1 if self.isVisible else None # TODO: Try to get rid of this?
+    # height: 1 if self.isVisible else 0 # TODO: Try to get rid of this?
+    # opacity: 1 if self.isVisible else 0 # TODO: Try to get rid of this?
+    # disabled: not self.isVisible # TODO: Try to get rid of this?
     canvas:
         Color:
             rgba: .8, .8, .8, 1
@@ -67,7 +79,12 @@
         pos_hint: {'center_x': 0.57, 'center_y': 0.5}
         size_hint_x: .86
         size_hint_y: .9 if root.isVisible else None
-        height: 1 if root.isVisible else '0dp'
+        # height: 1 if root.isVisible else '0dp' # TODO: Can I get rid of this?
         text: root.title
-        text_size: self.width, None
-        font_size: 20
+        # text_size: self.width, None
+        # font_size: 20
+        text_size: self.width, self.height
+        font_size: self.height * 0.5
+        valign: 'center'
+        shorten: True
+        shorten_from: 'right'

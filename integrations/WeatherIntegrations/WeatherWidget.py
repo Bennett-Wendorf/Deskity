@@ -3,7 +3,7 @@ import json
 from datetime import datetime
 import threading
 from kivy.uix.widget import Widget
-from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.relativelayout import RelativeLayout
 from kivy.properties import ObjectProperty
 from kivy.clock import Clock
 from dynaconf_settings import settings
@@ -12,7 +12,7 @@ from helpers.ArgHandler import Get_Args
 from logger.AppLogger import build_logger
 logger = build_logger(logger_name="Weather Widget", debug=Get_Args().verbose)
 
-class WeatherWidget(BoxLayout):
+class WeatherWidget(RelativeLayout):
     base_url = "http://api.openweathermap.org/data/2.5/weather?"
 
     image_prefix = "http://openweathermap.org/img/wn/"

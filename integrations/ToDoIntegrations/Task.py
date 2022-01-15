@@ -31,7 +31,7 @@ class TaskItem(FloatLayout, RecycleDataViewBehavior, HoverBehavior):
         super(TaskItem, self).__init__(*kwargs)
         if self.id != '':
             self.list_id = self.id[:-1]
-        self.ids['checkbox'].bind(active=self.Box_Checked)
+        # self.ids['checkbox'].bind(active=self.Box_Checked)
 
     def Box_Checked(self, checkbox, value, *kwargs):
         # kwargs is needed here since Clock.schedule_once passes the time difference between scheduling and method call.
@@ -61,7 +61,7 @@ class TaskItem(FloatLayout, RecycleDataViewBehavior, HoverBehavior):
     def refresh_view_attrs(self, rv, index, data):
         ''' Catch and handle the view changes '''
         self.index = index
-        # self.status = data['status']
+        # self.status = data['status'] # TODO: Get rid of this if not needed
         # self.title = data['title']
         # self.id = data['id']
         # self.body = data['body']

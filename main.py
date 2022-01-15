@@ -1,5 +1,7 @@
 import os
 os.environ["KIVY_NO_ARGS"]="1"
+os.environ["KIVY_WINDOW"]="sdl2"
+os.environ["KIVY_GL_BACKEND"]="sdl2"
 
 from helpers.ArgHandler import Parse_Args, Get_Args
 
@@ -18,7 +20,7 @@ from kivy.cache import Cache
 from kivy.atlas import Atlas
 
 # Set the default size of the window to 480x320, the size of my 3.5" touchscreen module for a Raspberry Pi
-Config.set('graphics', 'width', '480')
+Config.set('graphics', 'width', '480')  # TODO: Try to get rid of this
 Config.set('graphics', 'height', '320')
 Window.size=(480,320)
 
