@@ -13,12 +13,6 @@
         size_hint: 0.15, 0.15
         pos_hint: {'x': 0.85, 'y': 0.85}
     Label:
-        canvas.before:
-            Color:
-                rgb: 0.3, 0.6, 1
-            Rectangle:
-                pos: self.pos
-                size: self.size
         id: song_title
         text: root.current_title
         text_size: self.width, None
@@ -30,12 +24,6 @@
         shorten: True
         shorten_from: 'right'
     Label:
-        canvas.before:
-            Color:
-                rgb: 0.3, 0.6, 1
-            Rectangle:
-                pos: self.pos
-                size: self.size
         id: album 
         text: root.current_album
         text_size: self.width, None
@@ -47,12 +35,6 @@
         shorten: True
         shorten_from: 'right'
     Label:
-        canvas.before:
-            Color:
-                rgb: 0.3, 0.6, 1
-            Rectangle:
-                pos: self.pos
-                size: self.size
         id: artist
         text: root.current_artist
         text_size: self.width, None
@@ -64,12 +46,6 @@
         shorten: True
         shorten_from: 'right'
     MDIconButton:
-        canvas.before:
-            Color:
-                rgb: 0.3, 0.6, 1
-            Rectangle:
-                pos: self.pos
-                size: self.size
         icon: 'pause' if root.playing else 'play'
         pos_hint: {'center_x': 0.75, 'center_y': 0.25}
         on_release: root.Toggle_Playback()
