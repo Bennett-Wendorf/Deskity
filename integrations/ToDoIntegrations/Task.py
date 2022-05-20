@@ -7,6 +7,13 @@ import json
 
 from kivy.core.window import Window
 
+from helpers.ArgHandler import Get_Args
+
+# Logging
+from logger.AppLogger import build_logger
+# Build the logger object, using the argument for verbosity as the setting for debug log level
+logger = build_logger(logger_name="To Do Task", debug=Get_Args().verbose)
+
 class TaskItem(FloatLayout, RecycleDataViewBehavior, HoverBehavior):
     """
     A task item object. Holds info about the task it contains and sets up a layout with that information. 
@@ -31,11 +38,13 @@ class TaskItem(FloatLayout, RecycleDataViewBehavior, HoverBehavior):
         super(TaskItem, self).__init__(*kwargs)
         if self.id != '':
             self.list_id = self.id[:-1]
-        # self.ids['checkbox'].bind(active=self.Box_Checked)
+        self.ids['checkbox'].bind(active=self.Box_Checked)
 
     def Box_Checked(self, checkbox, value, *kwargs):
         # kwargs is needed here since Clock.schedule_once passes the time difference between scheduling and method call.
         # We don't really care about that time difference, so I'm just ignoring it here.
+
+        logger.debug(f"[{self.title}] Checkbox pressed")
 
         if value:
             self.Set_Status('completed')
@@ -52,7 +61,9 @@ class TaskItem(FloatLayout, RecycleDataViewBehavior, HoverBehavior):
         self.ids['checkbox'].background_checkbox_normal ="atlas://res/icons/custom_atlas/blue_check_unchecked"
 
     def on_touch_down(self, touch):
+
         if(self.hovering):
+            logger.debug(f"[{self.title}] Setting checkbox active status")
             if(not self.ids['checkbox'].active):
                 self.ids['checkbox'].active = True
             else:

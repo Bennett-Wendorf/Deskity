@@ -1,11 +1,11 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "2b84393f00acdd9682b008d67083ba97d7e7f00c18ee1f5e57800c2c53c14a00"
+            "sha256": "25593a036bf42c7d7950ce0add987eada1119da74ee77e036c2082c72ce0ca8d"
         },
         "pipfile-spec": 6,
         "requires": {
-            "python_version": "3.9"
+            "python_version": "3.10"
         },
         "sources": [
             {
@@ -528,7 +528,7 @@
                 "sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926",
                 "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"
             ],
-            "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'",
+            "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2'",
             "version": "==1.16.0"
         },
         "spotipy": {
