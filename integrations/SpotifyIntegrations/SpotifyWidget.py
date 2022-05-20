@@ -29,7 +29,6 @@ class SpotifyWidget(RelativeLayout):
     
     def __init__(self, **kwargs):
 
-        # TODO: Find a way to truncate these so they don't look weird
         self.current_title = "No Song Playing"
         self.current_album = "No Song Playing"
         self.current_artist = "No Song Playing"
