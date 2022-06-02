@@ -1,8 +1,11 @@
 # Yaml file that contains sensative authentication information for integrations
 *_authentication_settings.yml
 
-# Cache for storing microsoft oauth tokens
+# Cache for storing Microsoft oauth tokens
 microsoft_cache.bin
+
+# Cache for storing Spotify oauth tokens
+spotify_cache.bin
 
 # Lock file for virtual environment
 Pipfile.lock 

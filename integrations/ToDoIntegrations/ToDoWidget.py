@@ -51,9 +51,9 @@ default_lists = []
 default_task_visibility = True
 
 class ToDoWidget(RecycleView):
-    '''
+    """
     Handle all transactions for the Microsoft To Do integration.
-    '''
+    """
 
     # This stores all the actual task data in dictionaries
     to_do_tasks = ListProperty()
@@ -66,22 +66,27 @@ class ToDoWidget(RecycleView):
     sign_in_button = ObjectProperty()
     
     def __init__(self, **kwargs):
+        """Initialize the To Do Widget and authenticate to Microsoft Graph"""
+
         super(ToDoWidget, self).__init__(**kwargs)
         MSALHelper.Setup_Msal(self)
         Clock.schedule_interval(self.Start_Local_Update_Process, settings.To_Do_Widget.get('update_interval', 30))
 
     def refresh_from_data(self, *largs, **kwargs):
+        """Ensure that the display of tasks gets resorted any time the data is updated"""
+
         # Resort the data after information updates
         self.to_do_tasks = multikeysort(self.to_do_tasks, settings.To_Do_Widget.get('task_sort_order', default_sort_order))
         super(ToDoWidget, self).refresh_from_data(largs, kwargs)
 
     def Setup_Tasks(self, *kwargs):
-        '''
+        """
         Make sure all the tasks are set up properly during initialization.
 
         Ensure that a valid access token is present, pull all the tasks 
         from the API, sort them correctly, and display them on screen.
-        '''
+        """
+
         start = time.time()
         logger.info("Starting task setup")
         
@@ -92,12 +97,13 @@ class ToDoWidget(RecycleView):
         logger.debug(f"This task setup took {time.time() - start} seconds.")
 
     def Get_Task_Lists(self):
-        '''
+        """
         Get To Do task lists from Microsoft's graph API.
 
         NOTE: This is usually only run by the Get_All_Tasks method, there should
         be no need to get task lists without pulling the tasks from them.
-        '''
+        """
+
         logger.debug("Getting task lists")
 
         # Pull the specified lists from the config file. If that setting does not exist, default to an empty list that will pull all tasks
@@ -143,9 +149,10 @@ class ToDoWidget(RecycleView):
                 raise APIError("The response did not return a success code. Returning nothing.")
 
     async def Get_Tasks_From_List(self, session, list_name, list_id, all_tasks):
-        '''
+        """
         Asynchronously get data from the specified list and append the tasks to the 'all_tasks' list.
-        '''
+        """
+
         logger.info(f"Pulling tasks from list '{list_name}'")
         # Set up the first endpoint for this list
         endpoint = "https://graph.microsoft.com/v1.0/me/todo/lists/" + list_id + "/tasks/delta"
@@ -188,9 +195,10 @@ class ToDoWidget(RecycleView):
                     logger.error(f"Failed to get tasks from list '{list_name}'")
         
     async def Get_All_Tasks(self):
-        '''
+        """
         Pull individual tasks from the list returned by Get_Task_Lists and return them as a single list of dicts.
-        '''
+        """
+
         # TODO: Consider moving this to MSALHelper
         MSALHelper.Set_Msal_Headers({'Content-Type':'application/json', 'Authorization':'Bearer {0}'.format(MSALHelper.Aquire_Access_Token())})
         task_lists = self.Get_Task_Lists()
@@ -220,11 +228,12 @@ class ToDoWidget(RecycleView):
         self.refresh_from_data()
     
     def Update_Task(self, task_index):
-        '''
+        """
         Send a patch request to Microsoft's graph API to update the task data for the specified task.
 
         Also updates the task locally in terms of sort order, etc.
-        '''
+        """
+
         if task_index >= len(self.to_do_tasks):
             return
         
@@ -252,27 +261,30 @@ class ToDoWidget(RecycleView):
         remote_task_thread.start()
 
     def Push_Updated_Task(self, task):
-        '''
+        """
         Updates the given task on the remote server. This is designed to be run in a thread so as to not 
         delay the main UI when waiting for Microsoft's API.
-        '''
+        """
+
         task_endpoint = "https://graph.microsoft.com/v1.0/me/todo/lists/" + task['list_id'] + "/tasks/" + task['id']
         task_data = {k: task[k] for k in task.keys() - {'list_id', 'isVisible'}}
         requests.patch(task_endpoint, data=json.dumps(task_data), headers=MSALHelper.Get_Msal_Headers())
 
     def Start_Local_Update_Process(self, dt):
-        '''
+        """
         Start a new thread for updating the local task information from the server.
-        '''
+        """
+
         update_thread = threading.Thread(target=self.Locally_Update_All_Tasks)
         update_thread.setDaemon(True)
         update_thread.start()
 
     def Locally_Update_All_Tasks(self):
-        '''
+        """
         Make a request to the delta endpoint on Microsoft graph and update 
         the local tasks as specified.
-        '''
+        """
+        
         logger.info("Starting tasks update")
         # TODO Look into a more pythonic way to do this with list comprehension
         # or something using async functions.

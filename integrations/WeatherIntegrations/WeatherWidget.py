@@ -12,7 +12,13 @@ from helpers.ArgHandler import Get_Args
 from logger.AppLogger import build_logger
 logger = build_logger(logger_name="Weather Widget", debug=Get_Args().verbose)
 
+default_update_interval = 600
+
 class WeatherWidget(RelativeLayout):
+    """A weather widget to display weather data including current temperature, 
+    a 'feels like' temperature, and an icon for current conditions
+    """
+
     base_url = "http://api.openweathermap.org/data/2.5/weather?"
 
     image_prefix = "http://openweathermap.org/img/wn/"
@@ -28,18 +34,24 @@ class WeatherWidget(RelativeLayout):
 
         super(WeatherWidget, self).__init__(**kwargs)
 
-        Clock.schedule_interval(self.Start_Update_Loop, settings.Weather_Widget.get('update_interval', 600))
+        Clock.schedule_interval(self.Start_Update_Loop, settings.Weather_Widget.get('update_interval', default_update_interval))
 
     def Start_Update_Loop(self, dt):
+        """Start a new thread to handle updating the weather widget"""
+
         update_thread = threading.Thread(target=self.Get_Weather)
         update_thread.setDaemon(True)
         update_thread.start()
 
     def Update_UI(self, *args):
+        """Update the UI by setting the icon and forcing the image to reload"""
+
         self.weather_icon.source = self.Get_Icon()
         self.weather_icon.reload()
 
     def Get_Json_Data(self):
+        """Make an API call to OpenWeatherMap and return the result as JSON"""
+        
         # TODO Handle api key errors when too many requests happen
         result = requests.get(self.complete_url)
 
@@ -51,8 +63,10 @@ class WeatherWidget(RelativeLayout):
             print("Error Code")
             return None
 
-    # TODO: add some error checking here if some of this data does not exist
     def Get_Weather(self):
+        """Using the JSON data provided by 'Get_Json_Data', set the appropriate fields of the widget"""
+
+        # TODO: add some error checking here if some of this data does not exist
         logger.info("Pulling weather data")
         json_data = self.Get_Json_Data()
         if json_data:

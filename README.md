@@ -22,10 +22,9 @@
 <!-- PROJECT LOGO -->
 <br />
 <p align="center">
-  <!-- TODO Add logo here -->
-  <!-- <a href="https://github.com/bennett-wendorf/Kivy-Raspi-Desktop-App">
-    <img src="images/logo.png" alt="Logo" width="80" height="80">
-  </a> -->
+  <a href="https://github.com/bennett-wendorf/Kivy-Raspi-Desktop-App">
+    <img src="res/icons/app_logo_v0.2.0.png" alt="Logo" width="100" height="100">
+  </a>
 
   <h1 align="center">Kivy Raspi Desktop App</h3>
 
@@ -72,7 +71,7 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-<p align='center'><img src='res/0.1.0_alpha.png'></p>
+<p align='center'><img src='res/0.2.0_alpha.png'></p>
 
 When I started this project, I was both looking for a way to use the raspberry pi I had recently obtained, and also a way to expand my skills with python. The use case I came up with for a small desk accessory that showed some useful information at a glance was so specialized that I just decided to build it myself, rather than searching for a solution that did exactly what I wanted.
 

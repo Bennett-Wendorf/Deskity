@@ -37,7 +37,6 @@
         size_hint: 0.35, 0.4
     Label:
         text: str(int(root.Get_Temp())) + "°"
-        # font_size: '40sp'
         text_size: self.width, self.height
         font_size: self.height * 0.5
         valign: 'center'
@@ -46,7 +45,6 @@
         pos_hint: {'center_x': 0.675, 'center_y': 0.65}
     Label:
         text: "Feels like: " + str(int(root.Get_Feels())) + "°"
-        # font_size: '20sp'
         text_size: self.width, self.height
         font_size: self.height * 0.5
         valign: 'center'
@@ -56,10 +54,6 @@
 
 <TaskItem>:
     name: "Task Item"
-    # size_hint_y: 1 if self.isVisible else None # TODO: Try to get rid of this?
-    # height: 1 if self.isVisible else 0 # TODO: Try to get rid of this?
-    # opacity: 1 if self.isVisible else 0 # TODO: Try to get rid of this?
-    # disabled: not self.isVisible # TODO: Try to get rid of this?
     canvas:
         Color:
             rgba: .8, .8, .8, 1
@@ -79,10 +73,7 @@
         pos_hint: {'center_x': 0.57, 'center_y': 0.5}
         size_hint_x: .86
         size_hint_y: .9 if root.isVisible else None
-        # height: 1 if root.isVisible else '0dp' # TODO: Can I get rid of this?
         text: root.title
-        # text_size: self.width, None
-        # font_size: 20
         text_size: self.width, self.height
         font_size: self.height * 0.5
         valign: 'center'

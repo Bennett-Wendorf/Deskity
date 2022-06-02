@@ -1,10 +1,11 @@
 def multikeysort(items, columns):
-    '''
+    """
     Return the sorted list of dictionaries 'items' sorted in order by the keys in 'columns'. 
     
     These keys are specified as a list of strings in 'columns'. A '-' can be added to the 
     front of each key to reverse the sort order.
-    '''
+    """
+    
     from operator import itemgetter
     from functools import cmp_to_key
     comparers = [((itemgetter(col[1:].strip()), -1) if col.startswith('-') else (itemgetter(col.strip()), 1))

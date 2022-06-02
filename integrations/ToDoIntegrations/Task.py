@@ -18,8 +18,9 @@ class TaskItem(FloatLayout, RecycleDataViewBehavior, HoverBehavior):
     """
     A task item object. Holds info about the task it contains and sets up a layout with that information. 
     
-    Layout set up in raspideskstats.kv
+    Layout is set up in raspideskstats.kv
     """
+
     status = StringProperty()
     title = StringProperty()
     id = StringProperty()
@@ -40,9 +41,13 @@ class TaskItem(FloatLayout, RecycleDataViewBehavior, HoverBehavior):
             self.list_id = self.id[:-1]
         self.ids['checkbox'].bind(active=self.Box_Checked)
 
-    def Box_Checked(self, checkbox, value, *kwargs):
-        # kwargs is needed here since Clock.schedule_once passes the time difference between scheduling and method call.
-        # We don't really care about that time difference, so I'm just ignoring it here.
+    def Box_Checked(self, checkbox, value: bool, *kwargs):
+        """ Handle changing the status of the task and updating it on Microsoft when a checkbox is checked
+        
+        param checkbox: The checkbox object that was pressed.
+        param value: The new value of the checkbox
+        param kwargs: Extra arguments. This is needed to handle the time difference that the Clock object passes
+        """
 
         logger.debug(f"[{self.title}] Checkbox pressed")
 
@@ -55,12 +60,17 @@ class TaskItem(FloatLayout, RecycleDataViewBehavior, HoverBehavior):
             self.parent.parent.Update_Task(self.index)
 
     def on_enter(self, *args):
+        """Update the checkbox icon on hover"""
+
         self.ids['checkbox'].background_checkbox_normal ="atlas://res/icons/custom_atlas/blue_check"
 
     def on_leave(self, *args):
+        """Update the checkbox icon on hover"""
+
         self.ids['checkbox'].background_checkbox_normal ="atlas://res/icons/custom_atlas/blue_check_unchecked"
 
     def on_touch_down(self, touch):
+        """Update the checkbox status when any part of the task is touched"""
 
         if(self.hovering):
             logger.debug(f"[{self.title}] Setting checkbox active status")
@@ -70,28 +80,19 @@ class TaskItem(FloatLayout, RecycleDataViewBehavior, HoverBehavior):
                 self.ids['checkbox'].active = False
 
     def refresh_view_attrs(self, rv, index, data):
-        ''' Catch and handle the view changes '''
+        """Catch and handle the view changes"""
+        
         self.index = index
-        # self.status = data['status'] # TODO: Get rid of this if not needed
-        # self.title = data['title']
-        # self.id = data['id']
-        # self.body = data['body']
-        # self.list_id = data['list_id']
-        # self.createdDateTime = data['createdDateTime']
-        # self.lastModifiedDateTime = data['lastModifiedDateTime']
-        # self.importance = data['importance']
-        # self.isReminderOn = data['isReminderOn']
-        # self.isVisible = data['isVisible']
-        # if 'dueDateTime' in data:
-        #     self.dueDateTime = data['dueDateTime']
         return super(TaskItem, self).refresh_view_attrs(rv, index, data)
 
     def Get_Title(self):
-        '''Return the title of this task object.'''
+        """Return the title of this task object"""
+        
         return self.title
 
     def Set_Title(self, new_title):
-        '''Set the title of this task object and return whether it was properly set.'''
+        """Set the title of this task object and return whether it was properly set"""
+
         self.title = new_title
         if self.title == new_title:
             return True
@@ -99,11 +100,13 @@ class TaskItem(FloatLayout, RecycleDataViewBehavior, HoverBehavior):
             return False
 
     def Get_Status(self):
-        '''Return the status of this task object.'''
+        """Return the status of this task object"""
+
         return self.status
 
     def Set_Status(self, new_status):
-        '''Set the status of this task to the specified status, as long as that status is a valid option.'''
+        """Set the status of this task to the specified status, as long as that status is a valid option"""
+
         valid_statuses = ['completed', 'notStarted']
         if valid_statuses.count(new_status) > 0:
             self.status = new_status
@@ -114,23 +117,28 @@ class TaskItem(FloatLayout, RecycleDataViewBehavior, HoverBehavior):
             return self.Get_Status() == new_status
     
     def Get_Id(self):
-        '''Return the id of this task object.'''
+        """Return the id of this task object"""
+
         return self.id
 
     def Get_List_Id(self):
-        '''Return the list id of this task object.'''
+        """Return the list id of this task object"""
+
         return self.list_id
 
     def Get_Body(self):
-        '''Return the body of this task object.'''
+        """Return the body of this task object"""
+
         return self.body
 
     def Get_Importance(self):
-        '''Return the importance of this task object.'''
+        """Return the importance of this task object"""
+
         return self.importance
 
     def Build_Dict(self):
-        '''Return the attributes of this task as a dictionary.'''
+        """Return the attributes of this task as a dictionary"""
+
         return {
             'importance': self.importance, 
             'isReminderOn': self.is_reminder_on, 
@@ -143,19 +151,22 @@ class TaskItem(FloatLayout, RecycleDataViewBehavior, HoverBehavior):
         }
 
     def Build_Json(self):
-        '''Return the attributes of this object as JSON.'''
+        """Return the attributes of this object as JSON"""
+
         return json.dumps(self.Build_Dict())
 
     def __hash__(self):
-        '''Hashes TaskItem objects using their 'id' attribute to ensure that the same objects are always hashed the same.'''
+        """Hashes TaskItem objects using their 'id' attribute to ensure that the same objects are always hashed the same"""
+
         return hash(self.id)
 
     def __eq__(self, other):
-        '''
+        """
         Return equality for TaskItem based on the 'id' attribute. 
         
         If two tasks have the same id, then they are effectively the same task.
-        '''
+        """
+        
         if not isinstance(other, TaskItem):
             # Don't attempt to compare against unrelated types
             return NotImplemented

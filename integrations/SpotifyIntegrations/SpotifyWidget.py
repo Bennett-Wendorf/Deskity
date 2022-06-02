@@ -17,6 +17,9 @@ from kivy.lang import Builder
 Builder.load_file('./integrations/SpotifyIntegrations/kivyspotify.kv')
 
 class SpotifyWidget(RelativeLayout):
+    """ A widget to display information about the currently playing track on Spotify,
+    and allow the user to play and pause the playback.
+    """
 
     spotify = None
 
@@ -46,6 +49,8 @@ class SpotifyWidget(RelativeLayout):
         Clock.schedule_interval(self.Start_Update_Loop, 5)
 
     def Get_Playing(self):
+        """Get information about the current Spotify playback"""
+
         logger.info("Running Get_Playing")
         current = self.spotify.current_playback()
         if(current is not None):
@@ -58,6 +63,8 @@ class SpotifyWidget(RelativeLayout):
             self.ids.album_art.source = current['item']['album']['images'][1]['url']
 
     def Toggle_Playback(self):
+        """Toggle the current playback status on Spotify"""
+
         logger.info("Running Toggle_Playback")
         try:
             if(self.playing):
@@ -69,12 +76,17 @@ class SpotifyWidget(RelativeLayout):
             pass
 
     def Start_Update_Loop(self, *args):
+        """Start a new thread to get new playback information without affecting the UI"""
+
         update_thread = threading.Thread(target=self.Get_Playing)
         update_thread.setDaemon(True)
         update_thread.start()
 
     def Spotify_Auth(self):
+        """Complete the Spotify authentication process, and return the new Spotipy instance"""
+
         return spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=settings.Spotify_Widget.client_id,
                                                           client_secret=settings.Spotify_Widget.client_secret,
                                                           redirect_uri='http://localhost:8888/redirect',
-                                                          scope='user-library-read streaming app-remote-control user-read-playback-state'))
+                                                          scope='user-library-read streaming app-remote-control user-read-playback-state',
+                                                          cache_path='integrations/SpotifyIntegrations/spotify_cache.bin'))

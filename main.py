@@ -1,4 +1,6 @@
 import os
+
+# Set up some Kivy arguments for proper operation on Raspberry Pi
 os.environ["KIVY_NO_ARGS"]="1"
 os.environ["KIVY_WINDOW"]="sdl2"
 os.environ["KIVY_GL_BACKEND"]="sdl2"
@@ -16,21 +18,20 @@ from integrations.WeatherIntegrations.WeatherWidget import WeatherWidget
 from integrations.SpotifyIntegrations.SpotifyWidget import SpotifyWidget
 from kivy.uix.boxlayout import BoxLayout
 
-from kivy.cache import Cache
-from kivy.atlas import Atlas
-
 # Set the default size of the window to 480x320, the size of my 3.5" touchscreen module for a Raspberry Pi
 Config.set('graphics', 'width', '480')  # TODO: Try to get rid of this
 Config.set('graphics', 'height', '320')
 Window.size=(480,320)
 
 class MainBoxLayout(BoxLayout):
-    '''The main box layout of the app. Only one of these should be instantiated at a time. See raspideskstats.kv for layout.'''
+    """The main box layout of the app. Only one of these should be instantiated at a time. See raspideskstats.kv for layout"""
+
     def __init__(self):
         super().__init__()
 
 class RaspiDeskStatsApp(MDApp):
-    '''The main setup for the app. Instantiates the screen manager and binds the height of the tasks grid layout.'''
+    """The main setup for the app. Instantiates the screen manager and binds the height of the tasks grid layout"""
+
     def build(self):
         self.theme_cls.primary_palette = "Cyan"
         self.theme_cls.theme_style = "Dark"

@@ -2,6 +2,8 @@
 from dynaconf import Dynaconf, Validator
 
 def check_sort_order(keys):
+    """Validate that the sort order set in 'settings.toml' is exclusively made up of valid fields to sort on"""
+
     valid_attrs = ['status', 'title', 'id', 'body', 'list_id', 'createdDateTime', 'dueDateTime', 'lastModifiedDateTime', 'importance', 'isReminderOn']
     for key in keys:
         if len(key) > 0 and key[0] == '-':
@@ -15,6 +17,8 @@ def check_sort_order(keys):
 settings = Dynaconf(
     envvar_prefix="DYNACONF",
     settings_files=['settings.toml', '.secrets.toml'],
+
+    # Set up validators to ensure that settings are set up properly and don't have errors
     validators=[
         Validator('To_Do_Widget', must_exist=True),
         Validator('To_Do_Widget.update_interval', is_type_of=int),

@@ -19,6 +19,7 @@ from helpers.APIError import APIError
 
 #endregion
 
+# The default app id for Microsoft Graph that will get used if none is specified in `.secrets.toml`
 app_id = "565467a5-8f81-4e12-8c8d-e6ec0a0c4290"
 
 # The authorization code returned by Microsoft
@@ -27,10 +28,10 @@ authorization_response = None
 
 # Note that this class needs to be at the top of this file.
 class RequestHandler(http.server.SimpleHTTPRequestHandler):
-    '''
+    """
     Request handler to parse urls during a get request and strip out authorization code
     as a string. It also sets the global autorization_response variable to the authorization code.
-    '''
+    """
 
     def do_GET(self):
         global authorization_response
@@ -43,11 +44,11 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
         return http.server.SimpleHTTPRequestHandler.do_GET(self)
 
 def Run_Localhost_Server(server_class=http.server.HTTPServer, handler_class=RequestHandler):
-    '''
+    """
     Start a basic web server on localhost port 1080 using the custom request handler defined at the start of this file.
 
     This will only handle one request and then terminate.
-    '''
+    """
     server_address = ('127.0.0.1', 1080)
     httpd = server_class(server_address, handler_class)
     httpd.handle_request()
@@ -71,7 +72,8 @@ os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
 os.environ['OAUTHLIB_IGNORE_SCOPE_CHANGE'] = '1'
 
 def Setup_Msal(to_do_widget_instance):
-    '''Set up the msal helper so it can be used later. This should be run at __init__ of the To_Do_Widget'''
+    """Set up the msal helper so it can be used later. This should be run at __init__ of the To_Do_Widget"""
+
     global app
 
     cache = Deserialize_Cache("integrations/ToDoIntegrations/microsoft_cache.bin")
@@ -84,17 +86,20 @@ def Setup_Msal(to_do_widget_instance):
     setup_thread.start()
 
 def Get_Msal_Headers():
-    '''Return the headers needed to make API calls to Microsoft'''
+    """Return the headers needed to make API calls to Microsoft"""
+
     global headers
     return headers
 
 def Set_Msal_Headers(new_headers):
-    '''Change the headers that are needed to make API calls to Microsoft'''
+    """Change the headers that are needed to make API calls to Microsoft"""
+
     global headers
     headers = new_headers
 
 def Deserialize_Cache(cache_path):
-    '''Create the cache object, deserialize it for use, and register it to be reserialized before the application quits.'''
+    """Create the cache object, deserialize it for use, and register it to be reserialized before the application quits."""
+
     cache = SerializableTokenCache()
     if os.path.exists(cache_path):
         cache.deserialize(open(cache_path, "r").read())
@@ -110,10 +115,11 @@ def Deserialize_Cache(cache_path):
     return cache
 
 def Aquire_Access_Token():
-    '''
+    """
     If there is an access token in the cache, get it and obtain an authorization code using it. 
     Else run the Aquire_Auth_Code method to have the user authenticate.
-    '''
+    """
+
     global app, access_token, scopes, redirect_uri, settings
     result = None
     accounts = app.get_accounts()
@@ -143,7 +149,8 @@ def Aquire_Access_Token():
     return access_token
 
 def Pull_From_Token_Cache():
-    '''If there is a vaild account in the cache, obtain it and then use it to get and return an access token.'''
+    """If there is a vaild account in the cache, obtain it and then use it to get and return an access token"""
+
     global app, scopes
     
     accounts = app.get_accounts()
@@ -155,7 +162,8 @@ def Pull_From_Token_Cache():
         return None
 
 def Aquire_Auth_Code(settings):
-    '''Aquire MSAL authorization code from Microsoft.'''
+    """Aquire MSAL authorization code from Microsoft"""
+    
     # Use the global variables instead of a local ones
     global authorization_response, scopes, redirect_uri
 
