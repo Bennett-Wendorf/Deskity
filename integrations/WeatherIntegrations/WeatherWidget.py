@@ -37,6 +37,7 @@ class WeatherWidget(RelativeLayout):
 
     def Update_UI(self, *args):
         self.weather_icon.source = self.Get_Icon()
+        self.weather_icon.reload()
 
     def Get_Json_Data(self):
         # TODO Handle api key errors when too many requests happen

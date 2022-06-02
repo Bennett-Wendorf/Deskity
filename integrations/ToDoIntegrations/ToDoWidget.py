@@ -46,6 +46,10 @@ from dynaconf_settings import settings
 
 #endregion
 
+default_sort_order = ['-status', 'title']
+default_lists = []
+default_task_visibility = True
+
 class ToDoWidget(RecycleView):
     '''
     Handle all transactions for the Microsoft To Do integration.
@@ -68,7 +72,7 @@ class ToDoWidget(RecycleView):
 
     def refresh_from_data(self, *largs, **kwargs):
         # Resort the data after information updates
-        self.to_do_tasks = multikeysort(self.to_do_tasks, settings.To_Do_Widget.get('task_sort_order', ['-status', 'title']))
+        self.to_do_tasks = multikeysort(self.to_do_tasks, settings.To_Do_Widget.get('task_sort_order', default_sort_order))
         super(ToDoWidget, self).refresh_from_data(largs, kwargs)
 
     def Setup_Tasks(self, *kwargs):
@@ -82,7 +86,7 @@ class ToDoWidget(RecycleView):
         logger.info("Starting task setup")
         
         asyncio.run(self.Get_All_Tasks())
-        self.to_do_tasks = multikeysort(self.to_do_tasks, settings.To_Do_Widget.get('task_sort_order', ['-status', 'title']))
+        self.to_do_tasks = multikeysort(self.to_do_tasks, settings.To_Do_Widget.get('task_sort_order', default_sort_order))
 
         logger.info("Finished setting up tasks during initialization")
         logger.debug(f"This task setup took {time.time() - start} seconds.")
@@ -97,7 +101,7 @@ class ToDoWidget(RecycleView):
         logger.debug("Getting task lists")
 
         # Pull the specified lists from the config file. If that setting does not exist, default to an empty list that will pull all tasks
-        lists_to_use = settings.To_Do_Widget.get('lists_to_use', [])
+        lists_to_use = settings.To_Do_Widget.get('lists_to_use', default_lists)
 
         to_return = []
 
@@ -164,7 +168,7 @@ class ToDoWidget(RecycleView):
                             # TODO in-app toggle for this
                             task['isVisible'] = False
                         else:
-                            task['isVisible'] = settings.To_Do_Widget.get('incomplete_task_visibility', True)
+                            task['isVisible'] = settings.To_Do_Widget.get('incomplete_task_visibility', default_task_visibility)
                         all_tasks.append(task)
 
                     # TODO Find a more logical way to do this
@@ -232,7 +236,7 @@ class ToDoWidget(RecycleView):
         if task['status'] == "completed":
             task['isVisible'] = False
         else:
-            task['isVisible'] = settings.To_Do_Widget.get('incomplete_task_visibility', True)
+            task['isVisible'] = settings.To_Do_Widget.get('incomplete_task_visibility', default_task_visibility)
 
         # This needs to happen so that the ListProperty for data properly picks up the change
         self.to_do_tasks[task_index] = task
@@ -297,7 +301,7 @@ class ToDoWidget(RecycleView):
                             # TODO in-app toggle for this
                             task['isVisible'] = False
                         else:
-                            task['isVisible'] = settings.To_Do_Widget.get('incomplete_task_visibility', True)
+                            task['isVisible'] = settings.To_Do_Widget.get('incomplete_task_visibility', default_task_visibility)
 
                         task['list_id'] = list_id
 

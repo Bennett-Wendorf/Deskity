@@ -1,10 +1,13 @@
-#Yaml file that contains sensative authentication information for integrations
+# Yaml file that contains sensative authentication information for integrations
 *_authentication_settings.yml
 
-#Cache for storing microsoft oauth tokens
+# Cache for storing microsoft oauth tokens
 microsoft_cache.bin
 
-#VScode
+# Lock file for virtual environment
+Pipfile.lock 
+
+# VScode
 *.code-workspace
 /.vscode
 
