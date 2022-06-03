@@ -9,6 +9,8 @@ from kivy.core.window import Window
 
 from helpers.ArgHandler import Get_Args
 
+from helpers.Helpers import getDateTimeObj as getDtObj
+
 # Logging
 from logger.AppLogger import build_logger
 # Build the logger object, using the argument for verbosity as the setting for debug log level
@@ -26,9 +28,8 @@ class TaskItem(FloatLayout, RecycleDataViewBehavior, HoverBehavior):
     id = StringProperty()
     body = DictProperty()
     list_id = StringProperty()
-    # isCompleted = BooleanProperty()
     createdDateTime = StringProperty()
-    dueDateTime = None
+    dueDateTime = ObjectProperty(defaultvalue=None, allownone=True)
     lastModifiedDateTime = StringProperty()
     importance = StringProperty()
     isReminderOn = BooleanProperty()
@@ -83,6 +84,22 @@ class TaskItem(FloatLayout, RecycleDataViewBehavior, HoverBehavior):
         """Catch and handle the view changes"""
         
         self.index = index
+        self.status = data['status']
+        self.title = data['title']
+        self.id = data['id']
+        self.body = data['body']
+        self.list_id = data['list_id']
+        self.createdDateTime = data['createdDateTime']
+        self.lastModifiedDateTime = data['lastModifiedDateTime']
+        self.importance = data['importance']
+        self.isReminderOn = data['isReminderOn']
+        self.isVisible = data['isVisible']
+        if 'dueDateTime' in data:
+            self.dueDateTime = data['dueDateTime']
+        else:
+            self.dueDateTime = None
+
+        logger.debug(f"[{data['title']}] Refreshing view attributes")
         return super(TaskItem, self).refresh_view_attrs(rv, index, data)
 
     def Get_Title(self):
@@ -141,11 +158,12 @@ class TaskItem(FloatLayout, RecycleDataViewBehavior, HoverBehavior):
 
         return {
             'importance': self.importance, 
-            'isReminderOn': self.is_reminder_on, 
+            'isReminderOn': self.isReminderOn, 
             'status': self.status, 
             'title': self.title, 
-            'createdDateTime': self.created_date_time, 
-            'lastModifiedDateTime': self.last_modified_date_time, 
+            'createdDateTime': self.createdDateTime, 
+            'lastModifiedDateTime': self.lastModifiedDateTime, 
+            'dueDateTime': self.dueDateTime,
             'id': self.id, 
             'body': self.body
         }

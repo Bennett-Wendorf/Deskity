@@ -46,7 +46,7 @@ from dynaconf_settings import settings
 
 #endregion
 
-default_sort_order = ['-status', 'title']
+default_sort_order = ['-status', 'dueDateTime', 'title']
 default_lists = []
 default_task_visibility = True
 
@@ -303,7 +303,7 @@ class ToDoWidget(RecycleView):
                         local_task_index = next((i for i, item in enumerate(self.to_do_tasks) if item['id']==task['id']), None)
 
                         if '@removed' in task:
-                            logger.info(f"Removed ta`s`k titled '{self.to_do_tasks[local_task_index]['title']}'")
+                            logger.info(f"Removed task titled '{self.to_do_tasks[local_task_index]['title']}'")
                             # Remove the task from the local list and then move on to the next item in the list
                             self.to_do_tasks.pop(local_task_index)
                             continue

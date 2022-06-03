@@ -1,4 +1,5 @@
 # #:kivy !
+#:import getDtObj helpers.Helpers.getDateTimeObj
 <MainBoxLayout>:
     orientation: "horizontal"
     padding: 3
@@ -20,7 +21,7 @@
         data: [x for x in self.to_do_tasks if x['isVisible']]
         viewclass: 'TaskItem'
         RecycleBoxLayout:
-            default_size: None, dp(40)
+            default_size: None, dp(60)
             default_size_hint: 1, None
             size_hint_y: None
             height: self.minimum_height
@@ -70,12 +71,23 @@
         background_checkbox_normal: 'atlas://res/icons/custom_atlas/blue_check_unchecked'
         background_checkbox_down: 'atlas://res/icons/custom_atlas/blue_check'
     Label:
-        pos_hint: {'center_x': 0.57, 'center_y': 0.5}
+        pos_hint: {'center_x': 0.57, 'center_y': 0.68} if root.dueDateTime != None else {'center_x': 0.57, 'center_y': 0.5}
         size_hint_x: .86
         size_hint_y: .9 if root.isVisible else None
         text: root.title
         text_size: self.width, self.height
-        font_size: self.height * 0.5
+        font_size: self.height * 0.55
+        valign: 'center'
+        shorten: True
+        shorten_from: 'right'
+    Label:
+        pos_hint: {'center_x': 0.57, 'center_y': 0.22}
+        size_hint_x: 0.86
+        size_hint_y: .9 if (root.isVisible) else None
+        text: getDtObj(root.dueDateTime['dateTime']).strftime("%a, %b %-d, %Y") if root.dueDateTime != None else ""
+        text_size: self.width, self.height
+        font_size: self.height * 0.4
+        color: .8, .8, .8, 1
         valign: 'center'
         shorten: True
         shorten_from: 'right'
