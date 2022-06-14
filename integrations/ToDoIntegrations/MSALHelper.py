@@ -60,7 +60,7 @@ redirect_uri = "http://localhost:1080"
 scopes = ["user.read", "Tasks.ReadWrite"]
 headers = ""
 
-# The access token aquired in Aquire_Access_Token. This is a class variable for the cases
+# The access token acquired in Acquire_Access_Token. This is a class variable for the cases
 # where there is an attempt to make a request again in the short time this token is valid for.
 # If that should happen, storing the token like this minimalizes the amount of requests needed
 # to Microsoft's servers
@@ -71,7 +71,7 @@ access_token = None
 os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
 os.environ['OAUTHLIB_IGNORE_SCOPE_CHANGE'] = '1'
 
-def Setup_Msal(to_do_widget_instance):
+def Setup_Msal(to_do_widget_instance, *kwargs):
     """Set up the msal helper so it can be used later. This should be run at __init__ of the To_Do_Widget"""
 
     global app
@@ -114,7 +114,7 @@ def Deserialize_Cache(cache_path):
 
     return cache
 
-def Aquire_Access_Token():
+def Acquire_Access_Token():
     """
     If there is an access token in the cache, get it and obtain an authorization code using it. 
     Else run the Aquire_Auth_Code method to have the user authenticate.

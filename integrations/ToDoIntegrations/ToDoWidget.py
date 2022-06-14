@@ -6,6 +6,7 @@ import aiohttp
 import webbrowser
 import http.server
 from urllib.parse import urlparse, parse_qs
+from enum import Enum
 
 # Data formats
 import json
@@ -35,11 +36,14 @@ from integrations.ToDoIntegrations import MSALHelper
 # Kivy
 from kivy.properties import ObjectProperty, StringProperty, ListProperty
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.relativelayout import RelativeLayout
 from kivy.uix.label import Label
 from kivy.uix.button import Button 
 from kivy.uix.recycleboxlayout import RecycleBoxLayout
 from kivy.uix.recycleview import RecycleView
 from kivy.uix.recycleview.datamodel import RecycleDataModel
+
+from kivy.clock import mainthread
 
 # Settings
 from dynaconf_settings import settings
@@ -50,7 +54,12 @@ default_sort_order = ['-status', 'dueDateTime', 'title']
 default_lists = []
 default_task_visibility = True
 
-class ToDoWidget(RecycleView):
+class DownloadStatus(Enum):
+    auth = 1
+    loading = 2
+    done_loading = 3
+
+class ToDoWidget(RelativeLayout):
     """
     Handle all transactions for the Microsoft To Do integration.
     """
@@ -62,14 +71,20 @@ class ToDoWidget(RecycleView):
 
     delta_links = {}
 
-    sign_in_label_text = StringProperty()
     sign_in_button = ObjectProperty()
+
+    download_status = ObjectProperty()
     
     def __init__(self, **kwargs):
         """Initialize the To Do Widget and authenticate to Microsoft Graph"""
 
         super(ToDoWidget, self).__init__(**kwargs)
-        MSALHelper.Setup_Msal(self)
+
+        # Schedule these methods to run next frame so the proper widget setup is already completed
+        Clock.schedule_once(partial(self.Update_Download_Status, DownloadStatus.auth))
+        Clock.schedule_once(partial(MSALHelper.Setup_Msal, self))
+
+        # Schedule the local_update_process to run on the specified update interval
         Clock.schedule_interval(self.Start_Local_Update_Process, settings.To_Do_Widget.get('update_interval', 30))
 
     def refresh_from_data(self, *largs, **kwargs):
@@ -77,7 +92,11 @@ class ToDoWidget(RecycleView):
 
         # Resort the data after information updates
         self.to_do_tasks = multikeysort(self.to_do_tasks, settings.To_Do_Widget.get('task_sort_order', default_sort_order))
-        super(ToDoWidget, self).refresh_from_data(largs, kwargs)
+        super(ToDoWidget, self).ids['to_do_recycle_view'].refresh_from_data(largs, kwargs)
+
+    @mainthread
+    def Update_Download_Status(self, newDownloadStatus: DownloadStatus, *kwargs):
+        self.download_status = newDownloadStatus
 
     def Setup_Tasks(self, *kwargs):
         """
@@ -92,6 +111,9 @@ class ToDoWidget(RecycleView):
         
         asyncio.run(self.Get_All_Tasks())
         self.to_do_tasks = multikeysort(self.to_do_tasks, settings.To_Do_Widget.get('task_sort_order', default_sort_order))
+
+        # Now we have finished loading all the tasks, so the widget can be set up to show
+        self.Update_Download_Status(DownloadStatus.done_loading)
 
         logger.info("Finished setting up tasks during initialization")
         logger.debug(f"This task setup took {time.time() - start} seconds.")
@@ -200,7 +222,10 @@ class ToDoWidget(RecycleView):
         """
 
         # TODO: Consider moving this to MSALHelper
-        MSALHelper.Set_Msal_Headers({'Content-Type':'application/json', 'Authorization':'Bearer {0}'.format(MSALHelper.Aquire_Access_Token())})
+        MSALHelper.Set_Msal_Headers({'Content-Type':'application/json', 'Authorization':'Bearer {0}'.format(MSALHelper.Acquire_Access_Token())})
+        # At this point, the user is authenticated, so we can set the message accordingly
+        self.Update_Download_Status(DownloadStatus.loading)
+
         task_lists = self.Get_Task_Lists()
 
         if not task_lists:

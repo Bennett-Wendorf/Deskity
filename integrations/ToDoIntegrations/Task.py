@@ -57,8 +57,8 @@ class TaskItem(FloatLayout, RecycleDataViewBehavior, HoverBehavior):
         else:
             self.Set_Status('notStarted')
 
-        if self.parent and self.parent.parent:
-            self.parent.parent.Update_Task(self.index)
+        if self.parent and self.parent.parent and self.parent.parent.parent:
+            self.parent.parent.parent.Update_Task(self.index)
 
     def on_enter(self, *args):
         """Update the checkbox icon on hover"""
@@ -127,10 +127,10 @@ class TaskItem(FloatLayout, RecycleDataViewBehavior, HoverBehavior):
         valid_statuses = ['completed', 'notStarted']
         if valid_statuses.count(new_status) > 0:
             self.status = new_status
-            if self.parent and self.parent.parent:
-                item = self.parent.parent.to_do_tasks[self.index].copy()
+            if self.parent and self.parent.parent and self.parent.parent.parent:
+                item = self.parent.parent.parent.to_do_tasks[self.index].copy()
                 item['status'] = new_status
-                self.parent.parent.to_do_tasks[self.index] = item
+                self.parent.parent.parent.to_do_tasks[self.index] = item
             return self.Get_Status() == new_status
     
     def Get_Id(self):

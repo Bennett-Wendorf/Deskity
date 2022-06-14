@@ -1,5 +1,6 @@
 # #:kivy !
 #:import getDtObj helpers.Helpers.getDateTimeObj
+#:import DownloadStatus integrations.ToDoIntegrations.ToDoWidget.DownloadStatus
 <MainBoxLayout>:
     orientation: "horizontal"
     padding: 3
@@ -15,10 +16,28 @@
         WeatherWidget:
         SpotifyWidget:
     ToDoWidget:
-        id: to_do_widget
+
+<ToDoWidget>:
+    id: to_do_widget
+    MDSpinner:
+        id: to_do_loading_indicator
+        # text: "Loading..."
+        size_hint: (.25, .25)
+        pos_hint: {'center_x': .5, 'center_y': .5}
+        disabled: False if root.download_status == DownloadStatus.loading else True
+        opacity: 1 if root.download_status == DownloadStatus.loading else 0
+    Label:
+        id: to_do_auth_indicator
+        text: "Open your browser to sign in"
+        disabled: False if root.download_status == DownloadStatus.auth else True
+        opacity: 1 if root.download_status == DownloadStatus.auth else 0 
+    RecycleView:
+        id: to_do_recycle_view
         name: 'to_do_widget'
+        disabled: False if root.download_status == DownloadStatus.done_loading else True
+        opacity: 1 if root.download_status == DownloadStatus.done_loading else 0
         orientation: 'vertical'
-        data: [x for x in self.to_do_tasks if x['isVisible']]
+        data: [x for x in root.to_do_tasks if x['isVisible']]
         viewclass: 'TaskItem'
         RecycleBoxLayout:
             default_size: None, dp(60)
@@ -68,6 +87,7 @@
         size_hint_y: .9 if root.isVisible else None
         height: 1 if root.isVisible else '0dp'
         active: True if root.status == 'completed' else False
+        # TODO: Consider adding a rule for the 'disabled' property of this widget
         background_checkbox_normal: 'atlas://res/icons/custom_atlas/blue_check_unchecked'
         background_checkbox_down: 'atlas://res/icons/custom_atlas/blue_check'
     Label:

@@ -48,8 +48,8 @@
     MDIconButton:
         icon: 'pause' if root.playing else 'play'
         pos_hint: {'center_x': 0.75, 'center_y': 0.25}
+        icon_size: '32sp'
         on_release: root.Toggle_Playback()
-        user_font_size: 10
     ProgressBar:
         id: playback_progress
         pos_hint: {'center_x': 0.5, 'center_y': 0.1}
