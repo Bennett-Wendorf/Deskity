@@ -9,6 +9,8 @@ from kivy.core.window import Window
 
 from helpers.ArgHandler import Get_Args
 
+from kivymd.app import MDApp
+
 from helpers.Helpers import getDateTimeObj as getDtObj
 
 # Logging
@@ -36,11 +38,14 @@ class TaskItem(FloatLayout, RecycleDataViewBehavior, HoverBehavior):
     isVisible = BooleanProperty()
     index = None
 
+    to_do_widget = None
+
     def __init__(self, **kwargs):
         super(TaskItem, self).__init__(*kwargs)
         if self.id != '':
             self.list_id = self.id[:-1]
         self.ids['checkbox'].bind(active=self.Box_Checked)
+        self.to_do_widget = MDApp.get_running_app().root.ids['to_do_widget']
 
     def Box_Checked(self, checkbox, value: bool, *kwargs):
         """ Handle changing the status of the task and updating it on Microsoft when a checkbox is checked
@@ -57,17 +62,24 @@ class TaskItem(FloatLayout, RecycleDataViewBehavior, HoverBehavior):
         else:
             self.Set_Status('notStarted')
 
-        if self.parent and self.parent.parent and self.parent.parent.parent:
-            self.parent.parent.parent.Update_Task(self.index)
+        # self.parent here is needed to alleviate issues with this method getting called during setup
+        # I need to make sure that Update_Task is only called if this task object has a parent assigned,
+        # which IS NOT the case during setup
+        if self.to_do_widget and self.parent:
+            self.to_do_widget.Update_Task(self.index)
 
     def on_enter(self, *args):
         """Update the checkbox icon on hover"""
 
+        logger.debug(f"[{self.title}] Entering")
+        # Window.set_system_cursor('hand') # TODO: Figure out how too do this nicely
         self.ids['checkbox'].background_checkbox_normal ="atlas://res/icons/custom_atlas/blue_check"
 
     def on_leave(self, *args):
         """Update the checkbox icon on hover"""
 
+        logger.debug(f"[{self.title}] Leaving")
+        # Window.set_system_cursor('arrow')
         self.ids['checkbox'].background_checkbox_normal ="atlas://res/icons/custom_atlas/blue_check_unchecked"
 
     def on_touch_down(self, touch):
@@ -127,10 +139,10 @@ class TaskItem(FloatLayout, RecycleDataViewBehavior, HoverBehavior):
         valid_statuses = ['completed', 'notStarted']
         if valid_statuses.count(new_status) > 0:
             self.status = new_status
-            if self.parent and self.parent.parent and self.parent.parent.parent:
-                item = self.parent.parent.parent.to_do_tasks[self.index].copy()
+            if self.to_do_widget and self.parent:
+                item = self.to_do_widget.to_do_tasks[self.index].copy()
                 item['status'] = new_status
-                self.parent.parent.parent.to_do_tasks[self.index] = item
+                self.to_do_widget.to_do_tasks[self.index] = item
             return self.Get_Status() == new_status
     
     def Get_Id(self):
@@ -190,3 +202,6 @@ class TaskItem(FloatLayout, RecycleDataViewBehavior, HoverBehavior):
             return NotImplemented
 
         return self.id == other.id
+
+    def Get_Display_String(self):
+        return f"[{'✓' if self.status == 'completed' else ' '}] {self.title} due: {getDtObj(self.dueDateTime['dateTime']).strftime('%a, %b %-d, %Y') if self.dueDateTime != None else ''}"

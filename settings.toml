@@ -3,10 +3,10 @@
     # By default (if this is not specified), they will update every 30 seconds.
     update_interval = 30 #seconds
 
-    # Determines if incomplete tasks should be shown.
-    # Defaults to true if no value is specified.
+    # Determines if complete tasks should be shown by default.
+    # Defaults to false if no value is specified.
     # Must be either 'true' or 'false' (without the quotes).
-    incomplete_task_visibility = true
+    complete_task_visibility = false
 
     # The set of lists on Microsoft To Do to pull tasks from.
     # This will default to the empty list [] if left empty or not specified.

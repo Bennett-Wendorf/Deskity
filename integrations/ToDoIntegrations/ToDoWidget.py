@@ -34,7 +34,7 @@ from integrations.ToDoIntegrations.Task import TaskItem
 from integrations.ToDoIntegrations import MSALHelper
 
 # Kivy
-from kivy.properties import ObjectProperty, StringProperty, ListProperty
+from kivy.properties import ObjectProperty, StringProperty, ListProperty, BooleanProperty
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.relativelayout import RelativeLayout
 from kivy.uix.label import Label
@@ -52,7 +52,7 @@ from dynaconf_settings import settings
 
 default_sort_order = ['-status', 'dueDateTime', 'title']
 default_lists = []
-default_task_visibility = True
+default_task_visibility = False
 
 class DownloadStatus(Enum):
     auth = 1
@@ -74,6 +74,8 @@ class ToDoWidget(RelativeLayout):
     sign_in_button = ObjectProperty()
 
     download_status = ObjectProperty()
+
+    complete_visibility = BooleanProperty()
     
     def __init__(self, **kwargs):
         """Initialize the To Do Widget and authenticate to Microsoft Graph"""
@@ -82,6 +84,7 @@ class ToDoWidget(RelativeLayout):
 
         # Schedule these methods to run next frame so the proper widget setup is already completed
         Clock.schedule_once(partial(self.Update_Download_Status, DownloadStatus.auth))
+        Clock.schedule_once(partial(self.Update_Complete_Visibility, settings.To_Do_Widget.get('complete_task_visibility', default_task_visibility)))
         Clock.schedule_once(partial(MSALHelper.Setup_Msal, self))
 
         # Schedule the local_update_process to run on the specified update interval
@@ -90,6 +93,8 @@ class ToDoWidget(RelativeLayout):
     def refresh_from_data(self, *largs, **kwargs):
         """Ensure that the display of tasks gets resorted any time the data is updated"""
 
+        logger.debug("Refreshing view attributes")
+
         # Resort the data after information updates
         self.to_do_tasks = multikeysort(self.to_do_tasks, settings.To_Do_Widget.get('task_sort_order', default_sort_order))
         super(ToDoWidget, self).ids['to_do_recycle_view'].refresh_from_data(largs, kwargs)
@@ -97,6 +102,10 @@ class ToDoWidget(RelativeLayout):
     @mainthread
     def Update_Download_Status(self, newDownloadStatus: DownloadStatus, *kwargs):
         self.download_status = newDownloadStatus
+
+    @mainthread
+    def Update_Complete_Visibility(self, newCompleteVisibility, *kwargs):
+        self.complete_visibility = newCompleteVisibility
 
     def Setup_Tasks(self, *kwargs):
         """
@@ -192,12 +201,7 @@ class ToDoWidget(RelativeLayout):
                     for task in json_value:
                         # Add the list idea to the data so I can update the remote task later
                         task['list_id'] = list_id
-                        # Set the visiblity for the new task
-                        if task['status'] == "completed":
-                            # TODO in-app toggle for this
-                            task['isVisible'] = False
-                        else:
-                            task['isVisible'] = settings.To_Do_Widget.get('incomplete_task_visibility', default_task_visibility)
+                        self.Set_Task_Visibility_From_Status(task)
                         all_tasks.append(task)
 
                     # TODO Find a more logical way to do this
@@ -262,18 +266,7 @@ class ToDoWidget(RelativeLayout):
         if task_index >= len(self.to_do_tasks):
             return
         
-        task = self.to_do_tasks[task_index].copy()
-
-        # Update local task
-        # This section can contain any checks that need to be made any time a local task is updated
-        # TODO in-app toggle for this
-        if task['status'] == "completed":
-            task['isVisible'] = False
-        else:
-            task['isVisible'] = settings.To_Do_Widget.get('incomplete_task_visibility', default_task_visibility)
-
-        # This needs to happen so that the ListProperty for data properly picks up the change
-        self.to_do_tasks[task_index] = task
+        self.Set_Task_Visibility_With_List_Update(task_index)
 
         # Update the recycleview with the new data. This ensures that any sorting other other changes are
         # properly displayed
@@ -333,12 +326,7 @@ class ToDoWidget(RelativeLayout):
                             self.to_do_tasks.pop(local_task_index)
                             continue
 
-                        # Set task visibility based on new completion status
-                        if task['status'] == "completed":
-                            # TODO in-app toggle for this
-                            task['isVisible'] = False
-                        else:
-                            task['isVisible'] = settings.To_Do_Widget.get('incomplete_task_visibility', default_task_visibility)
+                        self.Set_Task_Visibility_From_Status(task)
 
                         task['list_id'] = list_id
 
@@ -357,3 +345,30 @@ class ToDoWidget(RelativeLayout):
                 logger.warning(f"The entire dataset for list id '{list_id}' must be redownloaded")
             else:
                 logger.error(f"Something went wrong checking for updated tasks on list id '{list_id}'")
+
+    def Set_Task_Visibility_From_Status(self, task):
+        logger.debug(f"[{task['title']}] Updating task visibility")
+        if task['status'] == "completed":
+            # TODO in-app toggle for this
+            task['isVisible'] = self.complete_visibility
+        else:
+            # Incomplete tasks should always be visible
+            task['isVisible'] = True
+
+    def Set_Task_Visibility_With_List_Update(self, task_index):
+        task = self.to_do_tasks[task_index]
+
+        self.Set_Task_Visibility_From_Status(task)
+
+        # This needs to happen so that the ListProperty for data properly picks up the change
+        self.to_do_tasks[task_index] = task
+
+    def Toggle_Complete_Visibility(self):
+        self.complete_visibility = not self.complete_visibility
+        self.Update_All_Task_Visibility()
+        self.refresh_from_data()
+
+    def Update_All_Task_Visibility(self):
+        # TODO: Look into a way to improve this
+        for i, task in enumerate(self.to_do_tasks):
+            self.Set_Task_Visibility_With_List_Update(i)
