@@ -268,6 +268,8 @@ class ToDoWidget(RelativeLayout):
         
         self.Set_Task_Visibility_With_List_Update(task_index)
 
+        tmp_task = self.to_do_tasks[task_index]
+
         # Update the recycleview with the new data. This ensures that any sorting other other changes are
         # properly displayed
         self.refresh_from_data()
@@ -275,7 +277,7 @@ class ToDoWidget(RelativeLayout):
         # Start the process of updating the task on the remote server in a new thread.
         # This is in a new thread so that the UI can update immediately, while the request
         # to Microsoft takes a small amount of time.
-        remote_task_thread = threading.Thread(target=self.Push_Updated_Task, args=(task,))
+        remote_task_thread = threading.Thread(target=self.Push_Updated_Task, args=(tmp_task,))
         remote_task_thread.start()
 
     def Push_Updated_Task(self, task):
