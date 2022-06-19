@@ -22,19 +22,7 @@
     item_height: 60
     item_height_fraq: self.item_height/self.height
     recycle_view_max_height: (self.height - self.item_height)
-    MDSpinner:
-        id: to_do_loading_indicator
-        size_hint: (.25, .25)
-        pos_hint: {'center_x': .5, 'center_y': .5}
-        disabled: False if root.download_status == DownloadStatus.loading else True
-        opacity: 1 if root.download_status == DownloadStatus.loading else 0
-    Label:
-        id: to_do_auth_indicator
-        text: "Open your browser to sign in"
-        disabled: False if root.download_status == DownloadStatus.auth else True
-        opacity: 1 if root.download_status == DownloadStatus.auth else 0 
     RelativeLayout:
-        # orientation: 'vertical'
         MDRoundFlatIconButton:
             id: to_do_dropdown_label
             size_hint_y: None
@@ -62,6 +50,17 @@
                 size_hint_y: None
                 height: self.minimum_height
                 orientation: 'vertical'
+    MDSpinner:
+        id: to_do_loading_indicator
+        size_hint: (.25, .25)
+        pos_hint: {'center_x': .5, 'center_y': .5}
+        disabled: False if root.download_status == DownloadStatus.loading else True
+        opacity: 1 if root.download_status == DownloadStatus.loading else 0
+    Label:
+        id: to_do_auth_indicator
+        text: "Open your browser to sign in"
+        disabled: False if root.download_status == DownloadStatus.auth else True
+        opacity: 1 if root.download_status == DownloadStatus.auth else 0 
 
 <WeatherWidget>:
     id: weather_widget
