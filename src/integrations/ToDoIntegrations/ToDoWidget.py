@@ -366,6 +366,7 @@ class ToDoWidget(RelativeLayout):
         self.to_do_tasks[task_index] = task
 
     def Toggle_Complete_Visibility(self):
+        logger.debug("Toggling complete task visibility")
         self.complete_visibility = not self.complete_visibility
         self.Update_All_Task_Visibility()
         self.refresh_from_data()

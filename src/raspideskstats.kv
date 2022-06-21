@@ -22,6 +22,17 @@
     item_height: 60
     item_height_fraq: self.item_height/self.height
     recycle_view_max_height: (self.height - self.item_height)
+    MDSpinner:
+        id: to_do_loading_indicator
+        size_hint: (.25, .25)
+        pos_hint: {'center_x': .5, 'center_y': .5}
+        disabled: False if root.download_status == DownloadStatus.loading else True
+        opacity: 1 if root.download_status == DownloadStatus.loading else 0
+    Label:
+        id: to_do_auth_indicator
+        text: "Open your browser to sign in"
+        disabled: False if root.download_status == DownloadStatus.auth else True
+        opacity: 1 if root.download_status == DownloadStatus.auth else 0 
     RelativeLayout:
         MDRoundFlatIconButton:
             id: to_do_dropdown_label
@@ -50,17 +61,6 @@
                 size_hint_y: None
                 height: self.minimum_height
                 orientation: 'vertical'
-    MDSpinner:
-        id: to_do_loading_indicator
-        size_hint: (.25, .25)
-        pos_hint: {'center_x': .5, 'center_y': .5}
-        disabled: False if root.download_status == DownloadStatus.loading else True
-        opacity: 1 if root.download_status == DownloadStatus.loading else 0
-    Label:
-        id: to_do_auth_indicator
-        text: "Open your browser to sign in"
-        disabled: False if root.download_status == DownloadStatus.auth else True
-        opacity: 1 if root.download_status == DownloadStatus.auth else 0 
 
 <WeatherWidget>:
     id: weather_widget
@@ -105,8 +105,8 @@
         height: 1 if root.isVisible else '0dp'
         active: True if root.status == 'completed' else False
         # TODO: Consider adding a rule for the 'disabled' property of this widget
-        background_checkbox_normal: 'atlas://res/icons/custom_atlas/blue_check_unchecked'
-        background_checkbox_down: 'atlas://res/icons/custom_atlas/blue_check'
+        background_checkbox_normal: f"{App.get_running_app().atlas_path}/blue_check_unchecked"
+        background_checkbox_down: f"{App.get_running_app().atlas_path}/blue_check"
     Label:
         pos_hint: {'center_x': 0.57, 'center_y': 0.68} if root.dueDateTime != None else {'center_x': 0.57, 'center_y': 0.5}
         size_hint_x: .86

@@ -1,14 +1,15 @@
 # #:kivy !
+#:import App kivymd.app.MDApp
 <SpotifyWidget>:
     AsyncImage:
         id: album_art
-        source: 'res/icons/Spotify_Icon_RGB_Green.png'
+        source: App.get_running_app().project_path + '/res/icons/Spotify_Icon_RGB_Green.png'
         size: self.width, self.height
         size_hint: 0.5, 0.5
         pos_hint: {'center_x': 0.25, 'center_y': 0.6}
     Image:
         id: spotify_logo
-        source: 'res/icons/Spotify_Icon_RGB_White.png'
+        source: App.get_running_app().project_path + '/res/icons/Spotify_Icon_RGB_White.png'
         size: self.width, self.height
         size_hint: 0.15, 0.15
         pos_hint: {'x': 0.85, 'y': 0.85}

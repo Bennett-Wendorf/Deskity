@@ -44,6 +44,7 @@ class TaskItem(FloatLayout, RecycleDataViewBehavior, HoverBehavior):
         super(TaskItem, self).__init__(*kwargs)
         if self.id != '':
             self.list_id = self.id[:-1]
+
         self.ids['checkbox'].bind(active=self.Box_Checked)
         self.to_do_widget = MDApp.get_running_app().root.ids['to_do_widget']
 
@@ -74,9 +75,9 @@ class TaskItem(FloatLayout, RecycleDataViewBehavior, HoverBehavior):
         logger.debug(f"[{self.title}] Entering")
         # Window.set_system_cursor('hand') # TODO: Figure out how too do this nicely
         if self.status == 'completed':
-            self.ids['checkbox'].background_checkbox_down = "atlas://res/icons/custom_atlas/blue_check_bright_hover"
+            self.ids['checkbox'].background_checkbox_down = f"{MDApp.get_running_app().atlas_path}/blue_check_bright_hover"
         else:
-            self.ids['checkbox'].background_checkbox_normal = "atlas://res/icons/custom_atlas/blue_check_dark_hover"
+            self.ids['checkbox'].background_checkbox_normal = f"{MDApp.get_running_app().atlas_path}/blue_check_dark_hover"
 
     def on_leave(self, *args):
         """Update the checkbox icon on hover"""
@@ -84,9 +85,9 @@ class TaskItem(FloatLayout, RecycleDataViewBehavior, HoverBehavior):
         logger.debug(f"[{self.title}] Leaving")
         # Window.set_system_cursor('arrow')
         if self.status == 'completed':
-            self.ids['checkbox'].background_checkbox_down ="atlas://res/icons/custom_atlas/blue_check"
+            self.ids['checkbox'].background_checkbox_down = f"{MDApp.get_running_app().atlas_path}/blue_check"
         else:
-            self.ids['checkbox'].background_checkbox_normal ="atlas://res/icons/custom_atlas/blue_check_unchecked"
+            self.ids['checkbox'].background_checkbox_normal = f"{MDApp.get_running_app().atlas_path}/blue_check_unchecked"
 
     def on_touch_down(self, touch):
         """Update the checkbox status when any part of the task is touched"""

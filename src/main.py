@@ -33,6 +33,9 @@ class RaspiDeskStatsApp(MDApp):
     """The main setup for the app. Instantiates the screen manager and binds the height of the tasks grid layout"""
 
     def build(self):
+        self.main_path = os.path.dirname(os.path.abspath(__file__))
+        self.project_path = os.path.normpath(self.main_path + "/..")
+        self.atlas_path = 'atlas://' + self.project_path + '/res/icons/custom_atlas'
         self.theme_cls.primary_palette = "Cyan"
         self.theme_cls.theme_style = "Dark"
         super(RaspiDeskStatsApp, self).build()
