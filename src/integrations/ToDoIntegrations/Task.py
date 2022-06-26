@@ -83,7 +83,7 @@ class TaskItem(FloatLayout, RecycleDataViewBehavior, HoverBehavior):
         """Update the checkbox icon on hover"""
 
         logger.debug(f"[{self.title}] Leaving")
-        # Window.set_system_cursor('arrow')
+        # Window.set_system_cursor('arrow') # TODO: Figure out how too do this nicely
         if self.status == 'completed':
             self.ids['checkbox'].background_checkbox_down = f"{MDApp.get_running_app().atlas_path}/blue_check"
         else:

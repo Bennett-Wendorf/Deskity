@@ -102,10 +102,22 @@ class ToDoWidget(RelativeLayout):
     @mainthread
     def Update_Download_Status(self, newDownloadStatus: DownloadStatus, *kwargs):
         self.download_status = newDownloadStatus
+        logger.debug(f"Set download status: {self.download_status}");
 
     @mainthread
     def Update_Complete_Visibility(self, newCompleteVisibility, *kwargs):
         self.complete_visibility = newCompleteVisibility
+        logger.debug(f"Set completion visibility: {self.complete_visibility}");
+
+    def debug_recycle_view(self):
+        recycle_view = self.ids['to_do_recycle_view']
+        print("Vars:", vars(recycle_view))
+        print("Disabled:", recycle_view.disabled)
+        print("Opacity:", recycle_view.opacity)
+        print("View Class:", recycle_view.viewclass)
+        print("Data:", recycle_view.data)
+        print("Layout Disabled:", self.ids['to_do_recycle_box_layout'].disabled)
+        print("Layout Opacity:", self.ids['to_do_recycle_box_layout'].opacity)
 
     def Setup_Tasks(self, *kwargs):
         """
