@@ -363,7 +363,6 @@ class ToDoWidget(RelativeLayout):
     def Set_Task_Visibility_From_Status(self, task):
         logger.debug(f"[{task['title']}] Updating task visibility")
         if task['status'] == "completed":
-            # TODO in-app toggle for this
             task['isVisible'] = self.complete_visibility
         else:
             # Incomplete tasks should always be visible

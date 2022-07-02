@@ -1,8 +1,7 @@
 import logging
 
-# TODO Change these when I come up with an app name
-APP_LOGGER_NAME = "App"
-APP_LOG_FILENAME = 'app.log'
+APP_LOGGER_NAME = "Deskity"
+APP_LOG_FILENAME = 'deskity.log'
 
 def build_logger(logger_name = APP_LOGGER_NAME, filename = APP_LOG_FILENAME, debug = False):
     """Build a new logger object, set up with all the proper settings for both console and file logging"""

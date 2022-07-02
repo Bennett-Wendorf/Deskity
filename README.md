@@ -21,12 +21,12 @@
 
 <!-- PROJECT LOGO -->
 <br />
-<p align="center">
+<p align="center">f
   <a href="https://github.com/bennett-wendorf/Kivy-Raspi-Desktop-App">
     <img src="res/icons/app_logo_v0.2.0.png" alt="Logo" width="100" height="100">
   </a>
 
-  <h1 align="center">Kivy Raspi Desktop App</h3>
+  <h1 align="center">Deskity</h3>
 
   <p align="center">
     A small app that uses Python and Kivy. Syncs with Microsoft ToDo as well as Gmail and OpenWeatherMap for information. Designed to run on a 3.5" touch screen for the raspberry pi.
