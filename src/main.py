@@ -24,12 +24,12 @@ Config.set('graphics', 'height', '320')
 Window.size=(480,320)
 
 class MainBoxLayout(BoxLayout):
-    """The main box layout of the app. Only one of these should be instantiated at a time. See raspideskstats.kv for layout"""
+    """The main box layout of the app. Only one of these should be instantiated at a time. See deskity.kv for layout"""
 
     def __init__(self):
         super().__init__()
 
-class RaspiDeskStatsApp(MDApp):
+class DeskityApp(MDApp):
     """The main setup for the app. Instantiates the screen manager and binds the height of the tasks grid layout"""
 
     def build(self):
@@ -38,10 +38,10 @@ class RaspiDeskStatsApp(MDApp):
         self.atlas_path = 'atlas://' + self.project_path + '/res/icons/custom_atlas'
         self.theme_cls.primary_palette = "Cyan"
         self.theme_cls.theme_style = "Dark"
-        super(RaspiDeskStatsApp, self).build()
+        super(DeskityApp, self).build()
         return MainBoxLayout()
 
 # Run the app when this file is run.
 if __name__ == '__main__':
     Parse_Args()
-    RaspiDeskStatsApp().run()
+    DeskityApp().run()
