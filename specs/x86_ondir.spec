@@ -5,10 +5,10 @@ block_cipher = None
 
 
 a = Analysis(
-    ['main.py'],
+    ['../src/main.py'],
     pathex=[],
     binaries=[],
-    datas=[('integrations/ToDoIntegrations/PLACEHOLDER', 'integrations/ToDoIntegrations'), ('dynaconf_settings.py', '.'), ('TEMPLATE.secrets.toml', '.'), ('settings.toml', '.'), ('index.html', '.'), ('res/', 'res'), ('raspideskstats.kv', '.'), ('integrations/SpotifyIntegrations/kivyspotify.kv', 'integrations/SpotifyIntegrations')],
+    datas=[('../src/integrations/ToDoIntegrations/PLACEHOLDER', 'integrations/ToDoIntegrations'), ('../src/dynaconf_settings.py', '.'), ('../TEMPLATE.secrets.toml', '.'), ('../settings.toml', '.'), ('../src/index.html', '.'), ('../res/', 'res'), ('../src/deskity.kv', '.'), ('../src/integrations/SpotifyIntegrations/kivyspotify.kv', 'integrations/SpotifyIntegrations')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

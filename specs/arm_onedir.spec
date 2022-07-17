@@ -5,10 +5,14 @@ block_cipher = None
 
 
 a = Analysis(
-    ['main.py'],
+    ['../src/main.py'],
     pathex=[],
     binaries=[('/usr/lib/arm-linux-gnueabihf/libnsl.so.2', '.')],
-    datas=[('integrations/ToDoIntegrations/PLACEHOLDER', 'integrations/ToDoIntegrations'), ('dynaconf_settings.py', '.'), ('TEMPLATE.secrets.toml', '.'), ('settings.toml', '.'), ('index.html', '.'), ('res/', 'res'), ('raspideskstats.kv', '.'), ('integrations/SpotifyIntegrations/kivyspotify.kv', 'integrations/SpotifyIntegrations')],
+    datas=[('../src/integrations/ToDoIntegrations/PLACEHOLDER', 'integrations/ToDoInt
+egrations'), ('../src/dynaconf_settings.py', '.'), ('../TEMPLATE.secrets.toml', '.'),
+ ('../settings.toml', '.'), ('../src/index.html', '.'), ('../res/', 'res'), ('../src/
+deskity.kv', '.'), ('../src/integrations/SpotifyIntegrations/kivyspotify.kv', 'integr
+ations/SpotifyIntegrations')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
