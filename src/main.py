@@ -1,4 +1,5 @@
 import os
+import sys
 
 # Set up some Kivy arguments for proper operation on Raspberry Pi
 os.environ["KIVY_NO_ARGS"]="1"
@@ -33,9 +34,25 @@ class DeskityApp(MDApp):
     """The main setup for the app. Instantiates the screen manager and binds the height of the tasks grid layout"""
 
     def build(self):
-        self.main_path = os.path.dirname(os.path.abspath(__file__))
-        self.project_path = os.path.normpath(self.main_path + "/..")
+
+        # Allow for different paths to res directory depending on whether we're running an executable or not
+        if getattr(sys, 'frozen', False):
+            # If the application is run as a bundle, the PyInstaller bootloader
+            # extends the sys module by a flag frozen=True and sets the app 
+            # path into variable _MEIPASS'.
+            self.main_path = sys._MEIPASS
+            logger.debug(f"Main path: {self.main_path}")
+            self.project_path = os.path.normpath(self.main_path)
+            logger.debug(f"Project path: {self.project_path}")
+        else:
+            self.main_path = os.path.dirname(os.path.abspath(__file__))
+            logger.debug(f"Main path: {self.main_path}")
+            self.project_path = os.path.normpath(self.main_path + "/..")
+            logger.debug(f"Project path: {self.project_path}")
+        
         self.atlas_path = 'atlas://' + self.project_path + '/res/icons/custom_atlas'
+        logger.debug(f"Atlas path: {self.atlas_path}")
+
         self.theme_cls.primary_palette = "Cyan"
         self.theme_cls.theme_style = "Dark"
         super(DeskityApp, self).build()
