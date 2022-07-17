@@ -8,11 +8,7 @@ a = Analysis(
     ['../src/main.py'],
     pathex=[],
     binaries=[('/usr/lib/arm-linux-gnueabihf/libnsl.so.2', '.')],
-    datas=[('../src/integrations/ToDoIntegrations/PLACEHOLDER', 'integrations/ToDoInt
-egrations'), ('../src/dynaconf_settings.py', '.'), ('../TEMPLATE.secrets.toml', '.'),
- ('../settings.toml', '.'), ('../src/index.html', '.'), ('../res/', 'res'), ('../src/
-deskity.kv', '.'), ('../src/integrations/SpotifyIntegrations/kivyspotify.kv', 'integr
-ations/SpotifyIntegrations')],
+    datas=[('../src/integrations/ToDoIntegrations/PLACEHOLDER', 'integrations/ToDoIntegrations'), ('../src/dynaconf_settings.py', '.'), ('../TEMPLATE.secrets.toml', '.'), ('../settings.toml', '.'), ('../src/index.html', '.'), ('../res/', 'res'), ('../src/deskity.kv', '.'), ('../src/integrations/SpotifyIntegrations/kivyspotify.kv', 'integrations/SpotifyIntegrations')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

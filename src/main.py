@@ -31,7 +31,7 @@ class MainBoxLayout(BoxLayout):
         super().__init__()
 
 class DeskityApp(MDApp):
-    """The main setup for the app. Instantiates the screen manager and binds the height of the tasks grid layout"""
+    """The main setup for the app. Set up some resource paths and theming and instantiates the main widget"""
 
     def build(self):
 
