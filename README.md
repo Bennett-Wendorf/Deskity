@@ -29,7 +29,7 @@
   <h1 align="center">Deskity</h3>
 
   <p align="center">
-    A small app that uses Python and Kivy. Syncs with Microsoft ToDo as well as Gmail and OpenWeatherMap for information. Designed to run on a 3.5" touch screen for the raspberry pi.
+    A small app that uses Python and Kivy. Syncs with Microsoft ToDo as well as Spotify and OpenWeatherMap for information. Designed to run on a 3.5" touch screen for the raspberry pi. 
     <br />
     <a href="https://github.com/bennett-wendorf/Deskity"><strong>Explore the docs »</strong></a>
     <br />
