@@ -6,14 +6,18 @@ name = "pypi"
 [packages]
 kivy = "*"
 requests-oauthlib = "*"
-pyyaml = "*"
 python-dateutil = "*"
 pygments = "*"
 msal = "*"
 aiohttp = "*"
 dynaconf = "*"
+kivymd = "*"
+spotipy = "*"
 
 [dev-packages]
+pyinstaller = "*"
+pytest = "*"
+coverage = "*"
 
 [requires]
-python_version = "3.9"
+python_version = "3.10"

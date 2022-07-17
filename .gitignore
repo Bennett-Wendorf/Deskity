@@ -1,10 +1,16 @@
-#Yaml file that contains sensative authentication information for integrations
+# Yaml file that contains sensative authentication information for integrations
 *_authentication_settings.yml
 
-#Cache for storing microsoft oauth tokens
+# Cache for storing Microsoft oauth tokens
 microsoft_cache.bin
 
-#VScode
+# Cache for storing Spotify oauth tokens
+spotify_cache.bin
+
+# Lock file for virtual environment
+Pipfile.lock 
+
+# VScode
 *.code-workspace
 /.vscode
 
@@ -39,7 +45,7 @@ MANIFEST
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
 *.manifest
-*.spec
+#*.spec
 
 # Installer logs
 pip-log.txt

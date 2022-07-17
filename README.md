@@ -22,22 +22,21 @@
 <!-- PROJECT LOGO -->
 <br />
 <p align="center">
-  <!-- TODO Add logo here -->
-  <!-- <a href="https://github.com/bennett-wendorf/Kivy-Raspi-Desktop-App">
-    <img src="images/logo.png" alt="Logo" width="80" height="80">
-  </a> -->
+  <a href="https://github.com/bennett-wendorf/Deskity">
+    <img src="res/icons/app_logo_v0.2.0.png" alt="Logo" width="100" height="100">
+  </a>
 
-  <h1 align="center">Kivy Raspi Desktop App</h3>
+  <h1 align="center">Deskity</h3>
 
   <p align="center">
-    A small app that uses Python and Kivy. Syncs with Microsoft ToDo as well as Gmail and OpenWeatherMap for information. Designed to run on a 3.5" touch screen for the raspberry pi.
+    A small app that uses Python and Kivy. Syncs with Microsoft ToDo as well as Spotify and OpenWeatherMap for information. Designed to run on a 3.5" touch screen for the raspberry pi. 
     <br />
-    <a href="https://github.com/bennett-wendorf/Kivy-Raspi-Desktop-App"><strong>Explore the docs »</strong></a>
+    <a href="https://github.com/bennett-wendorf/Deskity"><strong>Explore the docs »</strong></a>
     <br />
     <br />
-    <a href="https://github.com/bennett-wendorf/Kivy-Raspi-Desktop-App/issues">Report Bug</a>
+    <a href="https://github.com/bennett-wendorf/Deskity/issues">Report Bug</a>
     ·
-    <a href="https://github.com/bennett-wendorf/Kivy-Raspi-Desktop-App/issues">Request Feature</a>
+    <a href="https://github.com/bennett-wendorf/Deskity/issues">Request Feature</a>
   </p>
 </p>
 
@@ -53,12 +52,7 @@
         <li><a href="#built-with">Built With</a></li>
       </ul>
     </li>
-    <li>
-      <a href="#getting-started">Getting Started</a>
-      <ul>
-        <li><a href="#installation">Installation</a></li>
-      </ul>
-    </li>
+    <li><a href="#getting-started">Getting Started</a></li>
     <li><a href="#roadmap">Roadmap</a></li>
     <li><a href="#contributing">Contributing</a></li>
     <li><a href="#license">License</a></li>
@@ -72,7 +66,7 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-<p align='center'><img src='res/0.1.0_alpha.png'></p>
+<p align='center'><img src='res/0.2.0_alpha.png'></p>
 
 When I started this project, I was both looking for a way to use the raspberry pi I had recently obtained, and also a way to expand my skills with python. The use case I came up with for a small desk accessory that showed some useful information at a glance was so specialized that I just decided to build it myself, rather than searching for a solution that did exactly what I wanted.
 
@@ -87,56 +81,13 @@ This project is written in python using kivy for the UI elements.
 <!-- GETTING STARTED -->
 ## Getting Started
 
-For now, there is no installer or prepackaged installation for this project. This will be coming in the future. For now, follow the installation instructions below.
-
-### Installation
-
-1. Clone the repo
-   ```sh
-   git clone https://github.com/Bennett-Wendorf/Kivy-Raspi-Desktop-App.git
-   ```
-2. Install dependencies
-    * Use pipenv to install the requirements in a virtual environment
-      ```sh
-      pipenv install
-      ```
-    OR
-    * Manually install requirements using `pip`
-      ```sh
-      pip install <requirements from Pipfile>
-      ```
-3. Make a copy of the `TEMPLATE.secrets.toml` file and rename the copy to `.secrets.toml`. This is where you will add settings that shouldn't be pushed to a repository, such as API keys.
-3. Get a free API Key for weather data at [openweathermap.org/api](https://openweathermap.org/api).
-    * Add this key in `.secrets.toml` under the setting for `api_key` in the `Weather_Widget` category.
-      ```toml
-      [Weather_Widget]
-        api_key = "<Your Key Here>"
-      ```
-    * You can also try to use my API key by removing this setting from the file, but that may lead to throttling issues over time with OpenWeatherMap's free API. It is preferable to get your own key.
-4. Set up your app with Microsoft Graph. For the timebeing, I do not know if my `app_id` will work for all users, but feel free to test it by removing that setting in `.secrets.toml`. Otherwise, you will need to set up a free account and register the app yourself. Check out [Microsoft's page](https://docs.microsoft.com/en-us/azure/active-directory/develop/quickstart-register-app) for more help with this. 
-    * You should get an `app_id` from this, which should also be added in `.secrets.toml` under the setting for `app_id` in the `To_Do_Widget` category.
-      ```toml
-      [To_Do_Widget]
-        app_id = "<Your App Id Here>"
-      ```
-5. Modify any other settings you would like in the `settings.toml` file. What is listed in that file already is also the default if that particular setting is not specified, with the exception of the `lists_to_use` setting, which defaults to an empty list.
-6. Run the app
-    * If pipenv was used:
-      ```sh
-      pipenv run python main.py
-      ```
-    OR
-    * If not, just run:
-      ```sh
-      python main.py
-      ```
-
+See the instructions on the [wiki](https://github.com/Bennett-Wendorf/Deskity/wiki/Getting-Started) for help with getting this project set up.
 
 
 <!-- ROADMAP -->
 ## Roadmap
 
-See the [projects](https://github.com/Bennett-Wendorf/Kivy-Raspi-Desktop-App/projects) tab for an updated list of what I am working on. For any feature requests, please create an [issue](https://github.com/Bennett-Wendorf/Kivy-Raspi-Desktop-App/issues) (See [Contributing](#contributing)).
+See the [projects](https://github.com/Bennett-Wendorf/Deskity/projects) tab for an updated list of what I am working on. For any feature requests, please create an [issue](https://github.com/Bennett-Wendorf/Deskity/issues) (See [Contributing](#contributing)).
 
 
 
@@ -151,7 +102,7 @@ Contributions are what make the open source community such an amazing place to b
 4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-If you find an issue in existing code, feel free to use the above procedure to generate a change, or open an [issue](https://github.com/Bennett-Wendorf/Kivy-Raspi-Desktop-App/issues) for me to fix it.
+If you find an issue in existing code, feel free to use the above procedure to generate a change, or open an [issue](https://github.com/Bennett-Wendorf/Deskity/issues) for me to fix it.
 
 
 <!-- LICENSE -->
@@ -166,7 +117,7 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 Bennett Wendorf - [Website](https://bennett-wendorf.github.io/) - bennettwendorf@gmail.com
 
-Project Link: [https://github.com/Bennett-Wendorf/Kivy-Raspi-Desktop-App](https://github.com/Bennett-Wendorf/Kivy-Raspi-Desktop-App)
+Project Link: [https://github.com/Bennett-Wendorf/Deskity](https://github.com/Bennett-Wendorf/Deskity)
 
 
 
@@ -182,13 +133,13 @@ Project Link: [https://github.com/Bennett-Wendorf/Kivy-Raspi-Desktop-App](https:
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-[contributors-shield]: https://img.shields.io/github/contributors/bennett-wendorf/kivy-raspi-desktop-app.svg?style=flat&color=informational
-[contributors-url]: https://github.com/bennett-wendorf/kivy-raspi-desktop-app/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/bennett-wendorf/kivy-raspi-desktop-app.svg?style=flat
-[forks-url]: https://github.com/bennett-wendorf/kivy-raspi-desktop-app/network/members
-[stars-shield]: https://img.shields.io/github/stars/bennett-wendorf/kivy-raspi-desktop-app.svg?style=flat&color=yellow
-[stars-url]: https://github.com/bennett-wendorf/kivy-raspi-desktop-app/stargazers
-[issues-shield]: https://img.shields.io/github/issues/bennett-wendorf/kivy-raspi-desktop-app.svg?style=flat&color=red
-[issues-url]: https://github.com/bennett-wendorf/kivy-raspi-desktop-app/issues
-[license-shield]: https://img.shields.io/github/license/bennett-wendorf/kivy-raspi-desktop-app.svg?style=flat
-[license-url]: https://github.com/bennett-wendorf/kivy-raspi-desktop-app/blob/master/LICENSE.txt
+[contributors-shield]: https://img.shields.io/github/contributors/bennett-wendorf/Deskity.svg?style=flat&color=informational
+[contributors-url]: https://github.com/bennett-wendorf/Deskity/graphs/contributors
+[forks-shield]: https://img.shields.io/github/forks/bennett-wendorf/Deskity.svg?style=flat
+[forks-url]: https://github.com/bennett-wendorf/Deskity/network/members
+[stars-shield]: https://img.shields.io/github/stars/bennett-wendorf/Deskity.svg?style=flat&color=yellow
+[stars-url]: https://github.com/bennett-wendorf/Deskity/stargazers
+[issues-shield]: https://img.shields.io/github/issues/bennett-wendorf/Deskity.svg?style=flat&color=red
+[issues-url]: https://github.com/bennett-wendorf/Deskity/issues
+[license-shield]: https://img.shields.io/github/license/bennett-wendorf/Deskity.svg?style=flat
+[license-url]: https://github.com/bennett-wendorf/Deskity/blob/master/LICENSE
