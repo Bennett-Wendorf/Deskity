@@ -16,6 +16,7 @@ Pipfile.lock
 
 # Distribution zip
 distrib/Deskity.zip
+distrib/Deskity-x86.zip
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
