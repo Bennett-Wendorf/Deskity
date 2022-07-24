@@ -57,7 +57,7 @@ def Run_Localhost_Server(server_class=http.server.HTTPServer, handler_class=Requ
 app = None
 
 redirect_uri = "http://localhost:1080"
-scopes = ["user.read", "Tasks.ReadWrite"]
+scopes = ["User.Read", "Tasks.ReadWrite", "Tasks.ReadWrite.Shared"]
 headers = ""
 
 # The access token acquired in Acquire_Access_Token. This is a class variable for the cases
@@ -175,7 +175,7 @@ def Aquire_Auth_Code(settings):
 
     # Begins OAuth session with app_id, scopes, and redirect_uri from yml
     logger.debug("Starting an OAuth2 Session with the app_id")
-    aadAuth = OAuth2Session(settings.To_Do_Widget.get('app_id', app_id), scope=scopes, redirect_uri=redirect_uri)
+    aadAuth = OAuth2Session(settings.To_Do_Widget.get('app_id', app_id), scope=(scopes + ['offline_access']), redirect_uri=redirect_uri)
 
     # Obtain final login url from the OAuth session
     sign_in_url, state = aadAuth.authorization_url("https://login.microsoftonline.com/common/oauth2/v2.0/authorize")
