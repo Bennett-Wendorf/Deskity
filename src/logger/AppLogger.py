@@ -1,7 +1,8 @@
 import logging
+import os
 
 APP_LOGGER_NAME = "Deskity"
-APP_LOG_FILENAME = 'deskity.log'
+APP_LOG_FILENAME = "deskity.log"
 
 def build_logger(logger_name = APP_LOGGER_NAME, filename = APP_LOG_FILENAME, debug = False):
     """Build a new logger object, set up with all the proper settings for both console and file logging"""
@@ -10,7 +11,8 @@ def build_logger(logger_name = APP_LOGGER_NAME, filename = APP_LOG_FILENAME, deb
     logger.setLevel(logging.DEBUG)
 
     consoleHandler = logging.StreamHandler()
-    fileHandler = logging.FileHandler(filename)
+    log_path = os.path.normpath(f'{os.path.dirname(os.path.abspath(__file__))}/../..')
+    fileHandler = logging.FileHandler(f"{log_path}/{filename}")
 
     consoleHandler.setLevel(logging.DEBUG if debug else logging.INFO)
     fileHandler.setLevel(logging.WARNING)

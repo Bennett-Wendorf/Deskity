@@ -14,6 +14,9 @@ Pipfile.lock
 *.code-workspace
 /.vscode
 
+# Distribution zip
+distrib/Deskity.zip
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
