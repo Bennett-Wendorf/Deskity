@@ -12,6 +12,8 @@ from logger.AppLogger import build_logger
 # Build the logger object, using the argument for verbosity as the setting for debug log level
 logger = build_logger(logger_name="Spotify Widget", debug=Get_Args().verbose)
 
+from kivymd.app import MDApp as App
+
 from kivy.lang import Builder
 
 Builder.load_file('./integrations/SpotifyIntegrations/kivyspotify.kv')
@@ -89,4 +91,4 @@ class SpotifyWidget(RelativeLayout):
                                                           client_secret=settings.Spotify_Widget.client_secret,
                                                           redirect_uri='http://localhost:8888/redirect',
                                                           scope='user-library-read streaming app-remote-control user-read-playback-state',
-                                                          cache_path='integrations/SpotifyIntegrations/spotify_cache.bin'))
+                                                          cache_path=f"{App.get_running_app().main_path}/integrations/SpotifyIntegrations/spotify_cache.bin"))

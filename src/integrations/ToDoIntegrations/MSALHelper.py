@@ -17,6 +17,8 @@ from dynaconf_settings import settings
 
 from helpers.APIError import APIError
 
+from kivymd.app import MDApp as App
+
 #endregion
 
 # The default app id for Microsoft Graph that will get used if none is specified in `.secrets.toml`
@@ -57,7 +59,7 @@ def Run_Localhost_Server(server_class=http.server.HTTPServer, handler_class=Requ
 app = None
 
 redirect_uri = "http://localhost:1080"
-scopes = ["user.read", "Tasks.ReadWrite"]
+scopes = ["User.Read", "Tasks.ReadWrite", "Tasks.ReadWrite.Shared"]
 headers = ""
 
 # The access token acquired in Acquire_Access_Token. This is a class variable for the cases
@@ -76,7 +78,7 @@ def Setup_Msal(to_do_widget_instance, *kwargs):
 
     global app
 
-    cache = Deserialize_Cache("integrations/ToDoIntegrations/microsoft_cache.bin")
+    cache = Deserialize_Cache(f"{App.get_running_app().main_path}/integrations/ToDoIntegrations/microsoft_cache.bin")
 
     # Instantiate the Public Client App
     app = PublicClientApplication(settings.To_Do_Widget.get('app_id', app_id), authority="https://login.microsoftonline.com/common", token_cache=cache)
@@ -140,6 +142,7 @@ def Acquire_Access_Token():
             logger.debug("Getting a token from Microsoft using the auth code")
             result = app.acquire_token_by_authorization_code(authCode, scopes=scopes, redirect_uri=redirect_uri)
         
+        # TODO: Add error check to make sure result is defined and contains what it needs to
         # Strip down the result and convert it to a string to get the final access token
         access_token = str(result['access_token'])
     
@@ -175,7 +178,7 @@ def Aquire_Auth_Code(settings):
 
     # Begins OAuth session with app_id, scopes, and redirect_uri from yml
     logger.debug("Starting an OAuth2 Session with the app_id")
-    aadAuth = OAuth2Session(settings.To_Do_Widget.get('app_id', app_id), scope=scopes, redirect_uri=redirect_uri)
+    aadAuth = OAuth2Session(settings.To_Do_Widget.get('app_id', app_id), scope=(scopes + ['offline_access']), redirect_uri=redirect_uri)
 
     # Obtain final login url from the OAuth session
     sign_in_url, state = aadAuth.authorization_url("https://login.microsoftonline.com/common/oauth2/v2.0/authorize")
