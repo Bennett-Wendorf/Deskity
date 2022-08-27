@@ -44,7 +44,14 @@
         size_hint: (.4, .02)
         pos_hint: {'center_x': 0.5, 'center_y': 0.5}
         disabled: False if root.download_status == DownloadStatus.auth else True
-        opacity: 1 if root.download_status == DownloadStatus.auth else 0 
+        opacity: 1 if root.download_status == DownloadStatus.auth else 0
+    Label:
+        id: to_do_error_indicator
+        text: "There was an error with Microsoft"
+        size_hint: (.4, .02)
+        pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+        disabled: False if root.download_status == DownloadStatus.error else True
+        opacity: 1 if root.download_status == DownloadStatus.error else 0
     RelativeLayout:
         disabled: False if root.download_status == DownloadStatus.done_loading else True
         opacity: 1 if root.download_status == DownloadStatus.done_loading else 0

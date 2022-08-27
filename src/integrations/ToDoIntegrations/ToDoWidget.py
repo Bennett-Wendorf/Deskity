@@ -58,6 +58,7 @@ class DownloadStatus(Enum):
     auth = 1
     loading = 2
     done_loading = 3
+    error = 4
 
 class ToDoWidget(RelativeLayout):
     """
@@ -237,8 +238,14 @@ class ToDoWidget(RelativeLayout):
         Pull individual tasks from the list returned by Get_Task_Lists and return them as a single list of dicts.
         """
 
-        # TODO: Consider moving this to MSALHelper
-        MSALHelper.Set_Msal_Headers({'Content-Type':'application/json', 'Authorization':'Bearer {0}'.format(MSALHelper.Acquire_Access_Token())})
+        try:
+            access_token = MSALHelper.Acquire_Access_Token()
+        except APIError as e:
+            logger.error("Could not authenticate to Microsoft")
+            self.Update_Download_Status(DownloadStatus.error)
+            return
+
+        MSALHelper.Set_Msal_Headers({'Content-Type':'application/json', 'Authorization':'Bearer {0}'.format(access_token)})
         # At this point, the user is authenticated, so we can set the message accordingly
         self.Update_Download_Status(DownloadStatus.loading)
 

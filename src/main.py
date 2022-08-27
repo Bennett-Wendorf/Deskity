@@ -1,5 +1,6 @@
 import os
 import sys
+import requests
 
 # Set up some Kivy arguments for proper operation on Raspberry Pi
 os.environ["KIVY_NO_ARGS"]="1"
@@ -18,6 +19,7 @@ from integrations.ToDoIntegrations.ToDoWidget import ToDoWidget
 from integrations.WeatherIntegrations.WeatherWidget import WeatherWidget
 from integrations.SpotifyIntegrations.SpotifyWidget import SpotifyWidget
 from kivy.uix.boxlayout import BoxLayout
+import integrations.ToDoIntegrations.MSALHelper as MSALHelper
 
 # Set the default size of the window to 480x320, the size of my 3.5" touchscreen module for a Raspberry Pi
 Config.set('graphics', 'width', '480')  # TODO: Try to get rid of this
@@ -32,6 +34,10 @@ class MainBoxLayout(BoxLayout):
 
 class DeskityApp(MDApp):
     """The main setup for the app. Set up some resource paths and theming and instantiates the main widget"""
+
+    def send_MSAL_auth_server_kill_request(self):
+        parameterized_uri = f"{MSALHelper.redirect_uri}?shutdown=true"
+        requests.get(parameterized_uri)
 
     def build(self):
 
@@ -61,4 +67,9 @@ class DeskityApp(MDApp):
 # Run the app when this file is run.
 if __name__ == '__main__':
     Parse_Args()
-    DeskityApp().run()
+
+    app = DeskityApp()
+    app.run()
+
+    if not MSALHelper.auth_server_has_accepted_request:
+        app.send_MSAL_auth_server_kill_request()

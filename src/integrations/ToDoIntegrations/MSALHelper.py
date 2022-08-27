@@ -1,6 +1,5 @@
 #region Imports
 
-import requests
 import webbrowser
 import http.server
 from urllib.parse import urlparse, parse_qs
@@ -28,22 +27,38 @@ app_id = "565467a5-8f81-4e12-8c8d-e6ec0a0c4290"
 # This needs to be global to allow the request handler to obtain it and pass it back to Aquire_Auth_Code()
 authorization_response = None
 
+auth_server_has_accepted_request = False
+
 # Note that this class needs to be at the top of this file.
 class RequestHandler(http.server.SimpleHTTPRequestHandler):
     """
     Request handler to parse urls during a get request and strip out authorization code
-    as a string. It also sets the global autorization_response variable to the authorization code.
+    as a string. It also sets the global authorization_response variable to the authorization code.
     """
 
     def do_GET(self):
+        base_response = None
+
+        global auth_server_has_accepted_request
+        auth_server_has_accepted_request = True
+
         global authorization_response
         query_components = parse_qs(urlparse(self.path).query)
-        code = str(query_components['code'])
-        authorization_response = code[2:len(code)-2]
-        if self.path == '/':
-            self.path = 'index.html'
-        logger.debug("Got response from HTTP server.")
-        return http.server.SimpleHTTPRequestHandler.do_GET(self)
+        if 'shutdown' in query_components:
+            base_response = http.server.SimpleHTTPRequestHandler.do_GET(self)
+            return base_response
+
+        if authorization_response is None:
+            code = str(query_components['code'])
+            authorization_response = code[2:len(code)-2]
+            if self.path == '/':
+                self.path = 'index.html'
+            logger.debug("Got response from HTTP server.")
+        else:
+            logger.debug("Authorization Response is already set, so no need to set it again")
+
+        base_response = http.server.SimpleHTTPRequestHandler.do_GET(self)
+        return base_response
 
 def Run_Localhost_Server(server_class=http.server.HTTPServer, handler_class=RequestHandler):
     """
@@ -142,12 +157,11 @@ def Acquire_Access_Token():
             logger.debug("Getting a token from Microsoft using the auth code")
             result = app.acquire_token_by_authorization_code(authCode, scopes=scopes, redirect_uri=redirect_uri)
         
-        # TODO: Add error check to make sure result is defined and contains what it needs to
         # Strip down the result and convert it to a string to get the final access token
-        access_token = str(result['access_token'])
-    
-    if access_token == None:
-        raise APIError("Something went wrong and no Microsoft access token was obtained")
+        try:
+            access_token = str(result['access_token'])
+        except KeyError:
+            raise APIError("Something went wrong and no Microsoft access token was obtained")
     
     return access_token
 
