@@ -73,5 +73,5 @@ if __name__ == '__main__':
     app = DeskityApp()
     app.run()
 
-    if not MSALHelper.auth_server_has_accepted_request:
+    if MSALHelper.auth_server_waiting_for_request:
         app.send_MSAL_auth_server_kill_request()

@@ -27,7 +27,7 @@ app_id = "565467a5-8f81-4e12-8c8d-e6ec0a0c4290"
 # This needs to be global to allow the request handler to obtain it and pass it back to Aquire_Auth_Code()
 authorization_response = None
 
-auth_server_has_accepted_request = False
+auth_server_waiting_for_request = True
 
 # Note that this class needs to be at the top of this file.
 class RequestHandler(http.server.SimpleHTTPRequestHandler):
@@ -40,7 +40,7 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
         base_response = None
 
         global auth_server_has_accepted_request
-        auth_server_has_accepted_request = True
+        auth_server_has_accepted_request = False
 
         global authorization_response
         query_components = parse_qs(urlparse(self.path).query)
@@ -157,6 +157,9 @@ def Acquire_Access_Token():
             logger.debug("Getting a token from Microsoft using the auth code")
             result = app.acquire_token_by_authorization_code(authCode, scopes=scopes, redirect_uri=redirect_uri)
         
+        global auth_server_waiting_for_request
+        auth_server_waiting_for_request = False
+
         # Strip down the result and convert it to a string to get the final access token
         try:
             access_token = str(result['access_token'])
