@@ -8,6 +8,7 @@ os.environ["KIVY_WINDOW"]="sdl2"
 os.environ["KIVY_GL_BACKEND"]="sdl2"
 
 from helpers.ArgHandler import Parse_Args, Get_Args
+from dynaconf_settings import create_dynaconf_validators
 
 from logger.AppLogger import build_logger
 logger = build_logger(debug=Get_Args().verbose)
@@ -67,6 +68,7 @@ class DeskityApp(MDApp):
 # Run the app when this file is run.
 if __name__ == '__main__':
     Parse_Args()
+    create_dynaconf_validators()
 
     app = DeskityApp()
     app.run()

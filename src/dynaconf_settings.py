@@ -1,5 +1,11 @@
 
 from dynaconf import Dynaconf, Validator
+from dynaconf.validator import ValidationError
+
+from helpers.ArgHandler import Parse_Args, Get_Args
+
+from logger.AppLogger import build_logger
+logger = build_logger(logger_name="Dynaconf settings", debug=Get_Args().verbose)
 
 def check_sort_order(keys):
     """Validate that the sort order set in 'settings.toml' is exclusively made up of valid fields to sort on"""
@@ -17,9 +23,17 @@ def check_sort_order(keys):
 settings = Dynaconf(
     envvar_prefix="DYNACONF",
     settings_files=['settings.toml', '.secrets.toml'],
+)
 
-    # Set up validators to ensure that settings are set up properly and don't have errors
-    validators=[
+def handle_dynaconf_validation_errors(validation_error):
+    for error in validation_error.details:
+        logger.error(f"The following settings error occurred: {error[1]}")
+    logger.error("Program terminated due to configuration errors")
+    exit(1)
+
+# Set up validators to ensure that settings are set up properly and don't have errors
+def create_dynaconf_validators():
+    settings.validators.register(
         Validator('To_Do_Widget', must_exist=True),
         Validator('To_Do_Widget.update_interval', is_type_of=int),
         Validator('To_Do_Widget.incomplete_task_visibility', is_type_of=bool),
@@ -35,5 +49,9 @@ settings = Dynaconf(
         Validator('Spotify_Widget', must_exist=True),
         Validator('Spotify_Widget.client_id', must_exist=True, is_type_of=str, len_eq=32),
         Validator('Spotify_Widget.client_secret', must_exist=True, is_type_of=str, len_eq=32)
-    ],
-)
+    )
+
+    try:
+        settings.validators.validate_all()
+    except ValidationError as e:
+        handle_dynaconf_validation_errors(e)
