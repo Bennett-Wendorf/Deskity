@@ -29,12 +29,12 @@ class WeatherWidget(RelativeLayout):
     def __init__(self, **kwargs):
         # TODO Display city name in this widget
         # TODO Display units in this widget
-        self.complete_url = self.base_url + "appid=" + settings.Weather_Widget.api_key + "&q=" + settings.Weather_Widget.get('city_name', 'New York') + "&units=" + settings.Weather_Widget.get('units', 'imperial')
+        self.complete_url = self.base_url + "appid=" + settings.Weather_Widget.api_key + "&q=" + settings.Weather_Widget.city_name + "&units=" + settings.Weather_Widget.units
         self.Get_Weather()
 
         super(WeatherWidget, self).__init__(**kwargs)
 
-        Clock.schedule_interval(self.Start_Update_Loop, settings.Weather_Widget.get('update_interval', default_update_interval))
+        Clock.schedule_interval(self.Start_Update_Loop, settings.Weather_Widget.update_interval)
 
     def Start_Update_Loop(self, dt):
         """Start a new thread to handle updating the weather widget"""

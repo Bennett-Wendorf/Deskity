@@ -52,10 +52,6 @@ from dynaconf_settings import settings
 
 #endregion
 
-default_sort_order = ['-status', 'dueDateTime', 'title']
-default_lists = []
-default_task_visibility = False
-
 class DownloadStatus(Enum):
     auth = 1
     loading = 2
@@ -87,11 +83,11 @@ class ToDoWidget(RelativeLayout):
 
         # Schedule these methods to run next frame so the proper widget setup is already completed
         Clock.schedule_once(partial(self.Update_Download_Status, DownloadStatus.auth))
-        Clock.schedule_once(partial(self.Update_Complete_Visibility, settings.To_Do_Widget.get('complete_task_visibility', default_task_visibility)))
+        Clock.schedule_once(partial(self.Update_Complete_Visibility, settings.To_Do_Widget.complete_task_visibility))
         Clock.schedule_once(partial(MSALHelper.Setup_Msal, self))
 
         # Schedule the local_update_process to run on the specified update interval
-        Clock.schedule_interval(self.Start_Local_Update_Process, settings.To_Do_Widget.get('update_interval', 30))
+        Clock.schedule_interval(self.Start_Local_Update_Process, settings.To_Do_Widget.update_interval)
 
     def refresh_from_data(self, *largs, **kwargs):
         """Ensure that the display of tasks gets resorted any time the data is updated"""
@@ -99,7 +95,7 @@ class ToDoWidget(RelativeLayout):
         logger.debug("Refreshing view attributes")
 
         # Resort the data after information updates
-        self.to_do_tasks = multikeysort(self.to_do_tasks, settings.To_Do_Widget.get('task_sort_order', default_sort_order))
+        self.to_do_tasks = multikeysort(self.to_do_tasks, settings.To_Do_Widget.task_sort_order)
         super(ToDoWidget, self).ids['to_do_recycle_view'].refresh_from_data(largs, kwargs)
 
     @mainthread
@@ -134,7 +130,7 @@ class ToDoWidget(RelativeLayout):
         logger.info("Starting task setup")
         
         asyncio.run(self.Get_All_Tasks())
-        self.to_do_tasks = multikeysort(self.to_do_tasks, settings.To_Do_Widget.get('task_sort_order', default_sort_order))
+        self.to_do_tasks = multikeysort(self.to_do_tasks, settings.To_Do_Widget.task_sort_order)
 
         # Now we have finished loading all the tasks, so the widget can be set up to show
         self.Update_Download_Status(DownloadStatus.done_loading)
@@ -153,7 +149,7 @@ class ToDoWidget(RelativeLayout):
         logger.debug("Getting task lists")
 
         # Pull the specified lists from the config file. If that setting does not exist, default to an empty list that will pull all tasks
-        lists_to_use = settings.To_Do_Widget.get('lists_to_use', default_lists)
+        lists_to_use = settings.To_Do_Widget.lists_to_use
 
         to_return = []
 

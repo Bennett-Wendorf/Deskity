@@ -26,17 +26,22 @@
     # This setting defaults to ['-status', 'dueDateTime', 'title'] if it is not specified.
     task_sort_order = ['-status', 'dueDateTime', 'title']
 
-[Weather_Widget]
+# [Weather_Widget]
     # The city to pull weather data for.
     # Defaults to New York if not specified.
-    city_name = "La Crosse"
+    # city_name = "La Crosse"
 
     # The temperature units to display.
     # Possible values are 'standard' for Kelvin, 'imperial' for Fahrenheit, and 'metric' for Celsius.
     # see Openweathermap.org for more information: https://openweathermap.org/current#data.
     # The units will default to 'imperial' if they are not specified here.
-    units = "imperial"
+    # units = "imperial"
 
     # The interval to update the weather information on (in seconds).
     # Defaults to 600 seconds (5 mins) if no value is specified here.
-    update_interval = 600 #seconds
+    # update_interval = 600 #seconds
+
+[Spotify_Widget]
+    # The interval to update the Spotify information on (in seconds).
+    # Defaults to 6 seconds if no value is specified here.
+    update_interval = 5 #seconds

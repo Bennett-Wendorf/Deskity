@@ -48,7 +48,7 @@ class SpotifyWidget(RelativeLayout):
 
         super(SpotifyWidget, self).__init__(**kwargs)
 
-        Clock.schedule_interval(self.Start_Update_Loop, 5)
+        Clock.schedule_interval(self.Start_Update_Loop, settings.Spotify_Widget.update_interval)
 
     def Get_Playing(self):
         """Get information about the current Spotify playback"""

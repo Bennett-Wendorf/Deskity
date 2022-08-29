@@ -24,15 +24,15 @@ class ColorFormatter(logging.Formatter):
 
     def __init__(self, fmt=None, datefmt=None, style='%', validate=True, *,
                  defaults=None, use_logger_origin=True):
-        if use_logger_origin:
-            self.base_format = self.base_format + f' {self.yellow}({FILENAME_FORMAT_PART}:{LINE_NUMBER_FORMAT_PART}){self.reset}'
+        
+        origin_format = f'{self.yellow}({FILENAME_FORMAT_PART}:{LINE_NUMBER_FORMAT_PART}){self.reset}' if use_logger_origin else ""
 
         self.FORMATS = {
-            logging.DEBUG: f"[{self.cyan_bold}{LEVEL_NAME_FORMAT_PART}{self.reset}] {self.base_format}",
+            logging.DEBUG: f"[{self.cyan_bold}{LEVEL_NAME_FORMAT_PART}{self.reset}] {self.base_format} {origin_format}",
             logging.INFO: f"[{self.green_bold}{LEVEL_NAME_FORMAT_PART}{self.reset}] {self.base_format}",
             logging.WARNING: f"[{self.yellow_bold}{LEVEL_NAME_FORMAT_PART}{self.reset}] {self.base_format}",
-            logging.ERROR: f"[{self.red_bold}{LEVEL_NAME_FORMAT_PART}{self.reset}] {self.base_format}",
-            logging.CRITICAL: f"[{self.red_bold}{LEVEL_NAME_FORMAT_PART}{self.reset}] {self.base_format}"
+            logging.ERROR: f"[{self.red_bold}{LEVEL_NAME_FORMAT_PART}{self.reset}] {self.base_format} {origin_format}",
+            logging.CRITICAL: f"[{self.red_bold}{LEVEL_NAME_FORMAT_PART}{self.reset}] {self.base_format} {origin_format}"
         }
 
         super(ColorFormatter, self).__init__(fmt=fmt, datefmt=datefmt, style=style, validate=validate, defaults=defaults)

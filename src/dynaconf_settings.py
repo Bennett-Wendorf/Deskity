@@ -7,6 +7,9 @@ from helpers.ArgHandler import Parse_Args, Get_Args
 from logger.AppLogger import build_logger
 logger = build_logger(logger_name="Dynaconf Settings", debug=Get_Args().verbose, use_logger_origin=False)
 
+# The default app id for Microsoft Graph that will get used if none is specified in `.secrets.toml`
+MICROSOFT_APP_ID = "565467a5-8f81-4e12-8c8d-e6ec0a0c4290"
+
 def check_sort_order(keys):
     """Validate that the sort order set in 'settings.toml' is exclusively made up of valid fields to sort on"""
 
@@ -34,21 +37,20 @@ def handle_dynaconf_validation_errors(validation_error):
 # Set up validators to ensure that settings are set up properly and don't have errors
 def create_dynaconf_validators():
     settings.validators.register(
-        Validator('To_Do_Widget', must_exist=True),
-        Validator('To_Do_Widget.update_interval', is_type_of=int),
-        Validator('To_Do_Widget.incomplete_task_visibility', is_type_of=bool),
-        Validator('To_Do_Widget.lists_to_use', is_type_of=list),
-        Validator('To_Do_Widget.task_sort_order', is_type_of=list),
-        Validator('To_Do_Widget.task_sort_order', condition=check_sort_order),
-        Validator('To_Do_Widget.app_id', is_type_of=str, len_eq=36),
-        Validator('Weather_Widget', must_exist=True),
-        Validator('Weather_Widget.city_name', is_type_of=str),
-        Validator('Weather_Widget.units', is_type_of=str),
-        Validator('Weather_Widget.update_interval', is_type_of=int),
+        Validator('To_Do_Widget.update_interval', is_type_of=int, default=30),
+        Validator('To_Do_Widget.complete_task_visibility', is_type_of=bool, default=False),
+        Validator('To_Do_Widget.lists_to_use', is_type_of=list, default=[]),
+        Validator('To_Do_Widget.task_sort_order', is_type_of=list, condition=check_sort_order, default=['-status', 'dueDateTime', 'title']),
+        Validator('To_Do_Widget.app_id', is_type_of=str, len_eq=36, default=MICROSOFT_APP_ID),
+
+        Validator('Weather_Widget.city_name', is_type_of=str, default="New York"),
+        Validator('Weather_Widget.units', is_type_of=str, default='imperial'),
+        Validator('Weather_Widget.update_interval', is_type_of=int, default=600),
         Validator('Weather_Widget.api_key', must_exist=True, is_type_of=str, len_eq=32),
-        Validator('Spotify_Widget', must_exist=True),
+
         Validator('Spotify_Widget.client_id', must_exist=True, is_type_of=str, len_eq=32),
-        Validator('Spotify_Widget.client_secret', must_exist=True, is_type_of=str, len_eq=32)
+        Validator('Spotify_Widget.client_secret', must_exist=True, is_type_of=str, len_eq=32),
+        Validator('Spotify_Widget.update_interval', is_type_of=int, default=5),
     )
 
     try:
