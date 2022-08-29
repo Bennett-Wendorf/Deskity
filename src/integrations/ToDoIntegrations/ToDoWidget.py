@@ -16,8 +16,10 @@ from helpers.APIError import APIError
 from helpers.Helpers import multikeysort
 
 # Logging
+# from logger.AppLogger import build_logger
+# # Build the logger object, using the argument for verbosity as the setting for debug log level
+# logger = build_logger(logger_name="To Do Widget", debug=Get_Args().verbose)
 from logger.AppLogger import build_logger
-# Build the logger object, using the argument for verbosity as the setting for debug log level
 logger = build_logger(logger_name="To Do Widget", debug=Get_Args().verbose)
 
 # Scheduling and threading

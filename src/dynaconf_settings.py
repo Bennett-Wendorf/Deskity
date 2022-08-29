@@ -5,7 +5,7 @@ from dynaconf.validator import ValidationError
 from helpers.ArgHandler import Parse_Args, Get_Args
 
 from logger.AppLogger import build_logger
-logger = build_logger(logger_name="Dynaconf settings", debug=Get_Args().verbose)
+logger = build_logger(logger_name="Dynaconf Settings", debug=Get_Args().verbose, use_logger_origin=False)
 
 def check_sort_order(keys):
     """Validate that the sort order set in 'settings.toml' is exclusively made up of valid fields to sort on"""
