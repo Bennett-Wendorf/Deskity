@@ -1,0 +1,42 @@
+[To_Do_Widget]
+    # The interval in seconds on which the tasks update.
+    # By default (if this is not specified), they will update every 30 seconds.
+    update_interval = 30 #seconds
+
+    # Determines if complete tasks should be shown by default.
+    # Defaults to false if no value is specified.
+    # Must be either 'true' or 'false' (without the quotes).
+    complete_task_visibility = false
+
+    # The set of lists on Microsoft To Do to pull tasks from.
+    # This will default to the empty list [] if left empty or not specified.
+    # An empty list ([]) is the syntax needed to pull data from ALL lists.
+    lists_to_use = ["Demo List"]
+
+    # The set of attributes to order the tasks by.
+    # This should be a list (comma separated) of strings in order that the attributes should be sorted.
+    # Currently, these can contain any or all of the following attributes.
+    # 'status', 'title', 'id', 'body', 'list_id', 'createdDateTime', 'dueDateTime', 'lastModifiedDateTime', 'importance', 'isReminderOn'.
+    # Check out Microsoft's documentation for more information on these attributes: https://docs.microsoft.com/en-us/graph/api/resources/todotask?view=graph-rest-1.0.
+    # Also, a '-' character can be appended to any of the items to reverse the order of that particular key.
+    # Ex: ['-status', 'title'] will sort in reverse status order (i.e. incomplete tasks first and complete ones after) and then by title.
+    # This means that all complete tasks will show at the bottom, and each subcategory(complete and incomplete) will be sorted by title.
+    # This sorting is not limited to 2 attributes, any number of attributes should work!
+    # The list can also be left empty to display tasks in the same order they come from Microsoft.
+    # This setting defaults to ['-status', 'dueDateTime', 'title'] if it is not specified.
+    task_sort_order = ['-status', 'dueDateTime', 'title']
+
+[Weather_Widget]
+    # The city to pull weather data for.
+    # Defaults to New York if not specified.
+    city_name = "La Crosse"
+
+    # The temperature units to display.
+    # Possible values are 'standard' for Kelvin, 'imperial' for Fahrenheit, and 'metric' for Celsius.
+    # see Openweathermap.org for more information: https://openweathermap.org/current#data.
+    # The units will default to 'imperial' if they are not specified here.
+    units = "imperial"
+
+    # The interval to update the weather information on (in seconds).
+    # Defaults to 600 seconds (5 mins) if no value is specified here.
+    update_interval = 600 #seconds
