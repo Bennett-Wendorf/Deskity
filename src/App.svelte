@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Greet from './lib/Greet.svelte'
+  import Greet from './components/Greet.svelte'
 </script>
 
 <main class="container">

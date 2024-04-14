@@ -1,12 +1,12 @@
 [To_Do_Widget]
     # The interval in seconds on which the tasks update.
     # By default (if this is not specified), they will update every 30 seconds.
-    update_interval = 30 #seconds
+    # update_interval = 30 #seconds
 
-    # Determines if complete tasks should be shown by default.
+    # Determines if completed tasks should be shown by default.
     # Defaults to false if no value is specified.
     # Must be either 'true' or 'false' (without the quotes).
-    complete_task_visibility = false
+    show_completed_tasks = false
 
     # The set of lists on Microsoft To Do to pull tasks from.
     # This will default to the empty list [] if left empty or not specified.
