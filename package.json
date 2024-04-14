@@ -1,5 +1,5 @@
 {
-  "name": "src",
+  "name": "tauri-app",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -11,7 +11,8 @@
     "tauri": "tauri"
   },
   "dependencies": {
-    "@tauri-apps/api": "^1"
+    "@tauri-apps/api": ">=2.0.0-beta.0",
+    "@tauri-apps/plugin-shell": ">=2.0.0-beta.0"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^3.0.1",
@@ -21,6 +22,6 @@
     "tslib": "^2.6.0",
     "typescript": "^5.0.2",
     "vite": "^5.0.0",
-    "@tauri-apps/cli": "^1"
+    "@tauri-apps/cli": ">=2.0.0-beta.0"
   }
 }
