@@ -1,38 +1,127 @@
 use config::{Config, ConfigError, Environment, File};
 use serde::Deserialize;
+use validator::{Validate, ValidationError};
 
-#[derive(Debug, Deserialize)]
+static MICROSOFT_APP_ID: &'static str = "565467a5-8f81-4e12-8c8d-e6ec0a0c4290";
+
+#[derive(Debug, Validate, Deserialize)]
 #[allow(unused)]
 pub struct ToDoWidget {
-    pub update_interval: u32,
-    pub show_completed_tasks: bool,
-    pub lists_to_use: Vec<String>,
-    pub task_sort_order: Vec<String>,
-    pub app_id: String,
+    update_interval: Option<u32>,
+    show_completed_tasks: Option<bool>,
+    lists_to_use: Option<Vec<String>>,
+    #[validate(custom(function = "validate_check_sort_order"))]
+    task_sort_order: Option<Vec<String>>,
+    #[validate(length(equal = 36))]
+    app_id: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+impl ToDoWidget {
+    pub fn get_update_interval(&self) -> u32 {
+        self.update_interval.unwrap_or(30)
+    }
+
+    pub fn get_show_completed_tasks(&self) -> bool {
+        self.show_completed_tasks.unwrap_or(false)
+    }
+
+    pub fn get_lists_to_use(&self) -> Vec<String> {
+        self.lists_to_use.clone().unwrap_or(vec![])
+    }
+
+    pub fn get_task_sort_order(&self) -> Vec<String> {
+        self.task_sort_order.clone().unwrap_or(vec!["-status".to_string(), "dueDateTime".to_string(), "title".to_string()])
+    }
+
+    pub fn get_app_id(&self) -> String {
+        self.app_id.clone().unwrap_or(MICROSOFT_APP_ID.to_string())
+    }
+}
+
+fn validate_check_sort_order(keys: &Vec<String>) -> Result<(), ValidationError> {
+    let valid_keys = vec![
+        "status".to_string(), "title".to_string(), "id".to_string(), 
+        "body".to_string(), "list_id".to_string(), "created_date_time".to_string(), 
+        "due_date_time".to_string(), "last_modified_date_time".to_string(), 
+        "importance".to_string(), "is_reminder_on".to_string()];
+    for key in keys {
+        if key.chars().nth(0).unwrap_or_default() == '-' {
+            let key = key[1..].to_string();
+            if !valid_keys.contains(&key) {
+                println!("Invalid sort key {:?}", key);
+                return Err(ValidationError::new("Invalid sort key"));
+            } else {
+                return Ok(());
+            }
+        }
+        if !valid_keys.contains(&key) {
+            println!("Invalid sort key {:?}", key);
+            return Err(ValidationError::new("Invalid sort key"));
+        }
+    }
+    Ok(())
+}
+
+#[derive(Debug, Validate, Deserialize)]
 #[allow(unused)]
 pub struct WeatherWidget {
-    pub city_name: String,
-    pub units: String,
-    pub update_interval: u32,
-    pub api_key: String,
+    city_name: Option<String>,
+    units: Option<String>,
+    update_interval: Option<u32>,
+    #[validate(length(equal = 32))]
+    api_key: String,
 }
 
-#[derive(Debug, Deserialize)]
+impl WeatherWidget {
+    pub fn get_city_name(&self) -> String {
+        self.city_name.clone().unwrap_or("New York".to_string())
+    }
+
+    pub fn get_units(&self) -> String {
+        self.units.clone().unwrap_or("imperial".to_string())
+    }
+
+    pub fn get_update_interval(&self) -> u32 {
+        self.update_interval.unwrap_or(600)
+    }
+
+    pub fn get_api_key(&self) -> String {
+        self.api_key.clone()
+    }
+}
+
+#[derive(Debug, Validate, Deserialize)]
 #[allow(unused)]
 pub struct SpotifyWidget {
-    pub update_interval: u32,
-    pub client_id: String,
-    pub client_secret: String,
+    update_interval: Option<u32>,
+    #[validate(length(equal = 32))]
+    client_id: String,
+    #[validate(length(equal = 32))]
+    client_secret: String,
 }
 
-#[derive(Debug, Deserialize)]
+impl SpotifyWidget {
+    pub fn get_update_interval(&self) -> u32 {
+        self.update_interval.unwrap_or(5)
+    }
+
+    pub fn get_client_id(&self) -> String {
+        self.client_id.clone()
+    }
+
+    pub fn get_client_secret(&self) -> String {
+        self.client_secret.clone()
+    }
+}
+
+#[derive(Debug, Validate, Deserialize)]
 #[allow(unused)]
 pub struct Settings {
+    #[validate(nested)]
     pub to_do_widget: ToDoWidget,
+    #[validate(nested)]
     pub weather_widget: WeatherWidget,
+    #[validate(nested)]
     pub spotify_widget: SpotifyWidget,
 }
 
@@ -47,12 +136,14 @@ impl Settings {
             .add_source(Environment::with_prefix("deskity"))
             .build()?;
 
-        // Now that we're done, let's access our configuration
-        println!("ToDo Update Interval: {:?}", s.get::<u32>("to_do_widget.update_interval"));
-        println!("ToDo Lists: {:?}", s.get::<Vec<String>>("to_do_widget.lists_to_use").unwrap());
-        println!("Weather City Name: {:?}", s.get::<String>("weather_widget.city_name").unwrap());
-
         // You can deserialize (and thus freeze) the entire configuration as
-        return s.try_deserialize()
+        let settings: Result<Self, ConfigError> =  s.try_deserialize();
+
+        match settings {
+            Ok(settings) => {
+                settings.validate().map_err(|e| ConfigError::Message(e.to_string())).map(|_| settings)
+            },
+            Err(e) => Err(e)
+        }
     }
 }

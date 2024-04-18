@@ -1,7 +1,7 @@
 [To_Do_Widget]
     # The interval in seconds on which the tasks update.
     # By default (if this is not specified), they will update every 30 seconds.
-    # update_interval = 30 #seconds
+    update_interval = 30 #seconds
 
     # Determines if completed tasks should be shown by default.
     # Defaults to false if no value is specified.
