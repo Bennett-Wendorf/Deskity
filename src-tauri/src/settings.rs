@@ -1,8 +1,13 @@
 use config::{Config, ConfigError, Environment, File};
 use serde::Deserialize;
 use validator::{Validate, ValidationError};
+use lazy_static::lazy_static;
 
 static MICROSOFT_APP_ID: &'static str = "565467a5-8f81-4e12-8c8d-e6ec0a0c4290";
+
+lazy_static! {
+    pub static ref SETTINGS: Settings = Settings::new().unwrap_or_else(|e| panic!("Failed to load settings. \n {:?}", e.to_string()));
+}
 
 #[derive(Debug, Validate, Deserialize)]
 #[allow(unused)]
