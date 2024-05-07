@@ -1,7 +1,7 @@
 {
-  "productName": "tauri-app",
-  "version": "0.0.0",
-  "identifier": "com.tauri.dev",
+  "productName": "Deskity",
+  "version": "1.0.0",
+  "identifier": "dev.bennettwendorf.deskity",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -10,8 +10,8 @@
   },
   "app": {"windows": [
       {
-        "title": "tauri-app",
-        "width": 800,
+        "title": "Deskity",
+        "width": 1024,
         "height": 600
       }
     ],

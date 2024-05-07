@@ -3,29 +3,37 @@
 
 mod settings;
 
-use log::warn;
 use tauri_plugin_log::{Target, TargetKind};
 use chrono::Local;
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
 fn greet(name: &str) -> String {
-    warn!("This is a warning message from Rust");
+    log::debug!("The user is about to be greeted");
     format!("Hello, {}! You've been greeted from Rust!", name)
 }
 
 fn main() {
+    #[cfg(debug_assertions)]
+    let log_targets: [Target; 2] = [
+        Target::new(TargetKind::Stdout), 
+        Target::new(TargetKind::Webview),
+    ];
+    
+    #[cfg(not(debug_assertions))]
+    let log_targets: [Target; 2] = [
+        Target::new(TargetKind::Stdout), 
+        Target::new(TargetKind::LogDir { file_name: None })
+    ];
+
     tauri::Builder::default()
-        .plugin(tauri_plugin_log::Builder::new().targets([
-                Target::new(TargetKind::Stdout),
-                Target::new(TargetKind::Webview),
-            ])
+        .plugin(tauri_plugin_log::Builder::new().targets(log_targets)
             .format(|callback, message, record| {
+                println!("{:#?}", record);
                 callback.finish(format_args!(
-                    "{}[{}:{}][{}] {}", 
+                    "{}[{:=<30}][{: <5}] {}", 
                     Local::now().format("[%Y-%m-%d][%H:%M:%S]"),
-                    record.file().unwrap_or("unknown"),
-                    record.line().unwrap_or(0),
+                    format!("{}:{} ", record.file().unwrap_or("svelte"), record.line().unwrap_or(0)),
                     tauri_plugin_log::fern::colors::ColoredLevelConfig::default().color(record.level()), 
                     message))
             })
