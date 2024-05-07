@@ -29,7 +29,6 @@ fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_log::Builder::new().targets(log_targets)
             .format(|callback, message, record| {
-                println!("{:#?}", record);
                 callback.finish(format_args!(
                     "{}[{:=<30}][{: <5}] {}", 
                     Local::now().format("[%Y-%m-%d][%H:%M:%S]"),
