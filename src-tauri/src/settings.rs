@@ -1,4 +1,5 @@
 use config::{Config, ConfigError, Environment, File};
+use directories_next::ProjectDirs;
 use lazy_static::lazy_static;
 use serde::Deserialize;
 use validator::{Validate, ValidationError};
@@ -156,13 +157,23 @@ pub struct Settings {
 
 impl Settings {
     pub fn new() -> Result<Self, ConfigError> {
+        let mut settings_file: Option<String> = None;
+        let mut secrets_file: Option<String> = None;
+
+        if let Some(proj_dirs) = ProjectDirs::from("com", "bennettwendorf", "deskity") {
+            match proj_dirs.config_dir().to_str() {
+                Some(config_dir) => {
+                    settings_file = Some(format!("{}/deskity", config_dir));
+                    secrets_file = Some(format!("{}/deskity.secrets", config_dir));
+                }
+                None => {}
+            }
+        }
+
         let s = Config::builder()
-            // Start off by merging in the "default" configuration file
-            .add_source(File::with_name("../settings"))
-            // Merge in the secrets
-            .add_source(File::with_name("../.secrets").required(false))
-            // Add in settings from the environment (with a prefix of DESKITY)
-            .add_source(Environment::with_prefix("deskity"))
+            .add_source(File::with_name(settings_file.as_deref().unwrap_or("")).required(false))
+            .add_source(File::with_name(secrets_file.as_deref().unwrap_or("")).required(false))
+            .add_source(Environment::with_prefix("DESKITY"))
             .build()?;
 
         // You can deserialize (and thus freeze) the entire configuration as
