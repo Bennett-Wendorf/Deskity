@@ -10,6 +10,7 @@ spotify_cache.bin
 # Lock file for virtual environment
 Pipfile.lock 
 Cargo.lock
+package-lock.json
 
 # Logs
 logs
