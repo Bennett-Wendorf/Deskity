@@ -16,7 +16,7 @@
 <div>
   <form class="row" on:submit|preventDefault={greet}>
     <input id="greet-input" placeholder="Enter a name..." bind:value={name} />
-    <button type="submit">Greet</button>
+    <button type="submit" class="ml-2">Greet</button>
   </form>
   <p>{greetMsg}</p>
 </div>
