@@ -14,7 +14,7 @@
 </script>
 
 <div>
-  <form class="row" on:submit|preventDefault={greet}>
+  <form class="flex justify-center" on:submit|preventDefault={greet}>
     <input id="greet-input" placeholder="Enter a name..." bind:value={name} />
     <button type="submit" class="ml-2">Greet</button>
   </form>
