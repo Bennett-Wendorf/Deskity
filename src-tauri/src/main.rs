@@ -26,8 +26,6 @@ fn main() {
         Target::new(TargetKind::LogDir { file_name: None })
     ];
 
-    println!("{}", settings::SETTINGS.to_do_widget.get_update_interval());
-
     tauri::Builder::default()
         .plugin(tauri_plugin_log::Builder::new().targets(log_targets)
             .format(|callback, message, record| {
