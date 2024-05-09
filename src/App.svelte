@@ -1,6 +1,8 @@
 <script lang="ts">
     import "./app.css";
+    import DevHarness from "./components/DevHarness.svelte";
     import Greet from "./components/Greet.svelte";
+    import Weather from "./components/Weather.svelte";
 </script>
 
 <main class="m-0 pt-[10vh] flex flex-col justify-center text-center">
@@ -22,5 +24,11 @@
 
     <div class="flex justify-center">
         <Greet></Greet>
+    </div>
+
+    <div class="flex justify-center mt-4">
+        <DevHarness width="400px" height="250px">
+            <Weather />
+        </DevHarness>
     </div>
 </main>
