@@ -3,7 +3,7 @@
     import { setUpdateCommand } from "../../../utils/timer";
     import { debug } from "@tauri-apps/plugin-log";
     import { type WeatherResponse } from "./WeatherResponse";
-    import { onMount } from "svelte";
+    import { onDestroy, onMount } from "svelte";
     import { invoke } from "@tauri-apps/api/core";
 
     const IMAGE_URL_PREFIX = "http://openweathermap.org/img/wn/";
@@ -34,6 +34,10 @@
             feelsLike = weatherResponse.main.feels_like;
             icon = weatherResponse.weather[0].icon;
         })
+    });
+
+    onDestroy(() => {
+        cancelCallback();
     });
 </script>
 
