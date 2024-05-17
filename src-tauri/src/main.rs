@@ -40,8 +40,10 @@ fn main() {
             .level(log::LevelFilter::Debug)
             .build())
         .plugin(tauri_plugin_shell::init())
-        .invoke_handler(tauri::generate_handler![greet])
-        .invoke_handler(tauri::generate_handler![widgets::weather::get_weather])
+        .invoke_handler(tauri::generate_handler![
+            greet,
+            widgets::weather::get_weather,
+            settings::get_setting])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

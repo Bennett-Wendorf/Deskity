@@ -4,9 +4,7 @@
     import { debug } from "@tauri-apps/plugin-log";
     import { type WeatherResponse } from "./WeatherResponse";
     import { onMount } from "svelte";
-    import Error from "../Error.svelte";
-
-    // TODO: Implement unit config handling
+    import { invoke } from "@tauri-apps/api/core";
 
     const IMAGE_URL_PREFIX = "http://openweathermap.org/img/wn/";
     const IMAGE_URL_SUFFIX = "@4x.png";
@@ -18,8 +16,12 @@
     let errorMessage: string;
     let cancelCallback: () => void;
 
-    onMount(() => {
-        cancelCallback = setUpdateCommand("get_weather", 30000, (success: boolean, response) => {
+    onMount(async () => {
+        let updateInterval: number = parseInt(await invoke("get_setting", { module: "weather_widget", setting: "update_interval" }));
+
+        debug("Weather widget update interval: " + updateInterval);
+
+        cancelCallback = setUpdateCommand("get_weather", updateInterval * 1000, (success: boolean, response) => {
             dataSuccess = success;
             if (!success) {
                 errorMessage = response;
