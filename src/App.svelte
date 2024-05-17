@@ -2,7 +2,7 @@
     import "./app.css";
     import DevHarness from "./components/DevHarness.svelte";
     import Greet from "./components/Greet.svelte";
-    import Weather from "./components/Weather.svelte";
+    import Weather from "./components/Widgets/Weather/Weather.svelte";
 </script>
 
 <main class="m-0 pt-[10vh] flex flex-col justify-center text-center">
