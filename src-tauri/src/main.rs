@@ -2,6 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod settings;
+mod widgets { pub mod weather; }
 
 use tauri_plugin_log::{Target, TargetKind};
 use chrono::Local;
@@ -36,9 +37,13 @@ fn main() {
                     tauri_plugin_log::fern::colors::ColoredLevelConfig::default().color(record.level()), 
                     message))
             })
+            .level(log::LevelFilter::Debug)
             .build())
         .plugin(tauri_plugin_shell::init())
-        .invoke_handler(tauri::generate_handler![greet])
+        .invoke_handler(tauri::generate_handler![
+            greet,
+            widgets::weather::get_weather,
+            settings::get_setting])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

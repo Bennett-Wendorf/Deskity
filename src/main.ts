@@ -1,4 +1,3 @@
-import "./styles.css";
 import App from "./App.svelte";
 import { attachConsole } from "@tauri-apps/plugin-log";
 
