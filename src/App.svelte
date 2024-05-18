@@ -3,6 +3,7 @@
     import DevHarness from "./components/DevHarness.svelte";
     import Greet from "./components/Greet.svelte";
     import Weather from "./components/Widgets/Weather/Weather.svelte";
+    import FrontendWeather from "./components/Widgets/FrontendOnlyWeather/Weather.svelte";
 </script>
 
 <main class="m-0 pt-[10vh] flex flex-col justify-center text-center">
@@ -27,6 +28,9 @@
     </div>
 
     <div class="flex justify-center mt-4">
+        <DevHarness width="400px" height="250px">
+            <FrontendWeather />
+        </DevHarness>
         <DevHarness width="400px" height="250px">
             <Weather />
         </DevHarness>

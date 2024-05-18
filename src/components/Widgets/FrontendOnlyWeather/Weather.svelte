@@ -1,7 +1,6 @@
 <script lang="ts">
     import Widget from "../Widget.svelte";
     import { setUpdateCommand } from "../../../utils/timer";
-    import { debug } from "@tauri-apps/plugin-log";
     import { type WeatherResponse } from "./WeatherResponse";
     import { onDestroy, onMount } from "svelte";
     import { invoke } from "@tauri-apps/api/core";
@@ -9,6 +8,9 @@
     const IMAGE_URL_PREFIX = "http://openweathermap.org/img/wn/";
     const IMAGE_URL_SUFFIX = "@4x.png";
 
+    let apiKey: string;
+    let city: string;
+    let units: string;
     let temp: number = 0;
     let feelsLike: number = 0;
     let icon: string;
@@ -16,21 +18,42 @@
     let errorMessage: string;
     let cancelCallback: () => void;
 
+    async function getWeather() {
+        let response = await fetch(`http://api.openweathermap.org/data/2.5/weather?appid=${apiKey}&q=${city}&units=${units}`);
+        
+        if (response.ok) {
+            return response.json();
+        } else {
+            dataSuccess = false;
+            errorMessage = response.statusText;
+            return {};
+        }
+    }
+
+    function responseIsString(response: WeatherResponse | string): response is string {
+        return typeof response === "string";
+    }
+
     onMount(async () => {
         let updateInterval: number = parseInt(await invoke("get_setting", { module: "weather_widget", setting: "update_interval" }));
+        [apiKey, city, units] = await Promise.all([
+            invoke<string>("get_setting", { module: "weather_widget", setting: "api_key" }),
+            invoke<string>("get_setting", { module: "weather_widget", setting: "city_name" }),
+            invoke<string>("get_setting", { module: "weather_widget", setting: "units" })
+        ]);
 
-        cancelCallback = setUpdateCommand("get_weather", updateInterval * 1000, (success: boolean, response) => {
+        cancelCallback = setUpdateCommand(getWeather, updateInterval * 1000, (success: boolean, response: WeatherResponse | string) => {
             dataSuccess = success;
-            if (!success) {
+            if (!success && responseIsString(response)) {
                 errorMessage = response;
                 return;
             }
 
-            debug(response);
-            let weatherResponse: WeatherResponse = JSON.parse(response);
-            temp = weatherResponse.main.temp;
-            feelsLike = weatherResponse.main.feels_like;
-            icon = weatherResponse.weather[0].icon;
+            if (!responseIsString(response)) {
+                temp = response.main.temp;
+                feelsLike = response.main.feels_like;
+                icon = response.weather[0].icon;
+            }
         })
     });
 
