@@ -4,35 +4,32 @@
     import Greet from "./components/Greet.svelte";
     import Weather from "./components/Widgets/Weather/Weather.svelte";
     import FrontendWeather from "./components/Widgets/FrontendOnlyWeather/Weather.svelte";
+    import HorizontalSplit from "./components/Layout/HorizontalSplit.svelte";
+    import VerticalSplit from "./components/Layout/VerticalSplit.svelte";
 </script>
 
-<main class="m-0 pt-[10vh] flex flex-col justify-center text-center">
-    <h1 class="align-center">Welcome to Tauri!</h1>
-
-    <div class="flex justify-center">
-        <a href="https://vitejs.dev" target="_blank" class="font-medium">
-            <img src="/vite.svg" class="h-24 p-6 will-change-[filter] duration-700 vite" alt="Vite Logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank" class="font-medium">
-            <img src="/tauri.svg" class="h-24 p-6 will-change-[filter] duration-700 tauri" alt="Tauri Logo" />
-        </a>
-        <a href="https://svelte.dev" target="_blank" class="font-medium">
-            <img src="/svelte.svg" class="h-24 p-6 will-change-[filter] duration-700 svelte" alt="Svelte Logo" />
-        </a>
-    </div>
-
-    <p>Click on the Tauri, Vite, and Svelte logos to learn more.</p>
-
-    <div class="flex justify-center">
-        <Greet></Greet>
-    </div>
-
+<main class="m-0 py-[10vh] flex flex-col justify-center text-center">
     <div class="flex justify-center mt-4">
         <DevHarness width="400px" height="250px">
             <FrontendWeather />
         </DevHarness>
         <DevHarness width="400px" height="250px">
             <Weather />
+        </DevHarness>
+    </div>
+
+    <div>
+        <DevHarness width="1024px" height="600px">
+            <HorizontalSplit>
+                <VerticalSplit slot="left">
+                    <HorizontalSplit slot="left">
+                        <Weather slot="left" />
+                        <Weather slot="right" />
+                    </HorizontalSplit>
+                    <Weather slot="right" />
+                </VerticalSplit>
+                <FrontendWeather slot="right" />
+            </HorizontalSplit>
         </DevHarness>
     </div>
 </main>
