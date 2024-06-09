@@ -10,15 +10,15 @@
 
 <main class="m-0 py-[10vh] flex flex-col justify-center text-center">
     <div class="flex justify-center mt-4">
-        <DevHarness width="400px" height="250px">
+        <!-- <DevHarness width="400px" height="250px">
             <FrontendWeather />
-        </DevHarness>
+        </DevHarness> -->
         <DevHarness width="400px" height="250px">
             <Weather />
         </DevHarness>
     </div>
 
-    <div>
+    <!-- <div>
         <DevHarness width="1024px" height="600px">
             <HorizontalSplit>
                 <VerticalSplit slot="left">
@@ -31,5 +31,5 @@
                 <FrontendWeather slot="right" />
             </HorizontalSplit>
         </DevHarness>
-    </div>
+    </div> -->
 </main>

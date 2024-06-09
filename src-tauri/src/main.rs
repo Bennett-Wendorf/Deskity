@@ -3,6 +3,7 @@
 
 mod settings;
 mod widgets { pub mod weather; }
+mod layout_config;
 
 use tauri_plugin_log::{Target, TargetKind};
 use chrono::Local;
@@ -12,6 +13,12 @@ use chrono::Local;
 fn greet(name: &str) -> String {
     log::debug!("The user is about to be greeted");
     format!("Hello, {}! You've been greeted from Rust!", name)
+}
+
+fn setup(_app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
+    let _layout_config = layout_config::get_layout_config().unwrap();
+
+    Ok(())
 }
 
 fn main() {
@@ -40,6 +47,7 @@ fn main() {
             .level(log::LevelFilter::Debug)
             .build())
         .plugin(tauri_plugin_shell::init())
+        .setup(setup)
         .invoke_handler(tauri::generate_handler![
             greet,
             widgets::weather::get_weather,
