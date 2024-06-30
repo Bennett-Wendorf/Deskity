@@ -9,7 +9,12 @@ struct Widget {
     props: Value,
 }
 
-pub fn get_layout_config() -> Result<Value, String> {
+#[tauri::command]
+pub async fn get_layout_config(state: tauri::State<'_, Value>) -> Result<String, String> {
+    Ok(state.to_string())
+}
+
+pub fn new() -> Result<Value, String> {
     log::debug!("Getting layout config");
 
     let mut layout_config_file: Option<String> = None;

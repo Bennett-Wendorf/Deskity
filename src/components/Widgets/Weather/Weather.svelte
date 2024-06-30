@@ -1,5 +1,5 @@
 <script lang="ts">
-    import Widget from "../Widget.svelte";
+    import BaseWidget from "../BaseWidget.svelte";
     import { setUpdateCommand } from "../../../utils/timer";
     import { debug } from "@tauri-apps/plugin-log";
     import { type WeatherResponse } from "./WeatherResponse";
@@ -39,7 +39,7 @@
     });
 </script>
 
-<Widget error={!dataSuccess} errorMessage={errorMessage}>
+<BaseWidget error={!dataSuccess} errorMessage={errorMessage}>
     <div class="flex flex-row justify-center text-center my-auto h-full">
         <img src="{IMAGE_URL_PREFIX + (icon ?? "02d") + IMAGE_URL_SUFFIX}" alt="Temp weather info" class="h-24 m-auto">
 
@@ -48,4 +48,4 @@
             <div class="text-xl p-6">Feels like: {feelsLike.toLocaleString(undefined, { maximumFractionDigits: 0 })}°F</div>
         </div>
     </div>
-</Widget>
+</BaseWidget>

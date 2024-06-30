@@ -1,35 +1,29 @@
 <script lang="ts">
     import "./app.css";
     import DevHarness from "./components/DevHarness.svelte";
-    import Greet from "./components/Greet.svelte";
-    import Weather from "./components/Widgets/Weather/Weather.svelte";
-    import FrontendWeather from "./components/Widgets/FrontendOnlyWeather/Weather.svelte";
-    import HorizontalSplit from "./components/Layout/HorizontalSplit.svelte";
-    import VerticalSplit from "./components/Layout/VerticalSplit.svelte";
+    import { invoke } from "@tauri-apps/api/core";
+    import { type BaseWidgetType } from "./utils/layout_types";
+    import { error } from "@tauri-apps/plugin-log";
+    import Widget from "./Widget.svelte";
+    
+    let config: BaseWidgetType;
+
+    invoke<string>("get_layout_config")
+        .then(res => {
+            config = JSON.parse(res)
+        })
+        .catch(err => {
+            error(err)
+        })
+
 </script>
 
-<main class="m-0 py-[10vh] flex flex-col justify-center text-center">
-    <div class="flex justify-center mt-4">
-        <!-- <DevHarness width="400px" height="250px">
-            <FrontendWeather />
-        </DevHarness> -->
+<main class="m-0 flex flex-col justify-center text-center h-full">
+    <!-- <div class="flex justify-center mt-4">
         <DevHarness width="400px" height="250px">
             <Weather />
         </DevHarness>
-    </div>
-
-    <!-- <div>
-        <DevHarness width="1024px" height="600px">
-            <HorizontalSplit>
-                <VerticalSplit slot="left">
-                    <HorizontalSplit slot="left">
-                        <Weather slot="left" />
-                        <Weather slot="right" />
-                    </HorizontalSplit>
-                    <Weather slot="right" />
-                </VerticalSplit>
-                <FrontendWeather slot="right" />
-            </HorizontalSplit>
-        </DevHarness>
     </div> -->
+
+    <Widget backingData={config} />
 </main>

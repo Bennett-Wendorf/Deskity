@@ -1,4 +1,4 @@
 <div class="flex flex-col w-full h-full">
-    <slot name="left" />
-    <slot name="right" />
+    <slot name="top" />
+    <slot name="bottom" />
 </div>
