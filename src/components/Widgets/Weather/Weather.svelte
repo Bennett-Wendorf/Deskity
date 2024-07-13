@@ -1,7 +1,7 @@
 <script lang="ts">
     import BaseWidget from "../BaseWidget.svelte";
     import { setUpdateCommand } from "../../../utils/timer";
-    import { debug } from "@tauri-apps/plugin-log";
+    import { debug, error } from "@tauri-apps/plugin-log";
     import { type WeatherResponse } from "./WeatherResponse";
     import { onDestroy, onMount } from "svelte";
     import { invoke } from "@tauri-apps/api/core";
@@ -35,6 +35,7 @@
     });
 
     onDestroy(() => {
+        error("Cleaning up weather widget");
         cancelCallback();
     });
 </script>

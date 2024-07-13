@@ -19,6 +19,6 @@
             <svelte:self backingData={backingData.props.bottom} slot="bottom" />
         </VerticalSplit>
     {:else}
-        <svelte:component this={getWidget(backingData.type)} props={backingData.props} />
+        <svelte:component this={getWidget(backingData.type)} {...backingData.props} />
     {/if}
 {/if}
