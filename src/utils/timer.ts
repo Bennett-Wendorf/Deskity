@@ -1,7 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { debug } from "@tauri-apps/plugin-log";
 
-export function setUpdateCommand(command: string | ((args?: any) => any), interval: number, updateCallback: (success: boolean, response: any) => void, args?: any) : () => void {
+export function setUpdateCommand(command: string | ((args?: any) => Promise<any>), interval: number, updateCallback: (success: boolean, response: any) => void, args?: any) : () => void {
     let intervalID: number;
     debug(`Setting update command with interval: ${interval}ms`);
     if (typeof command === "string") {

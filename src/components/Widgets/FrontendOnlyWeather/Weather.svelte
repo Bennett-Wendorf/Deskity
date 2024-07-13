@@ -54,7 +54,7 @@
                 feelsLike = response.main.feels_like;
                 icon = response.weather[0].icon;
             }
-        })
+        });
     });
 
     onDestroy(() => {

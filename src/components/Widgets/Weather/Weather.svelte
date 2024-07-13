@@ -16,6 +16,8 @@
     let errorMessage: string;
     let cancelCallback: () => void;
 
+    let counter: number = 0;
+
     onMount(async () => {
         let updateInterval: number = parseInt(await invoke("get_setting", { module: "weather_widget", setting: "update_interval" }));
 
@@ -31,11 +33,10 @@
             temp = weatherResponse.main.temp;
             feelsLike = weatherResponse.main.feels_like;
             icon = weatherResponse.weather[0].icon;
-        })
+        });
     });
 
     onDestroy(() => {
-        error("Cleaning up weather widget");
         cancelCallback();
     });
 </script>
@@ -47,6 +48,7 @@
         <div class="flex flex-col justify-center m-auto">
             <div class="text-5xl p-6">{temp.toLocaleString(undefined, { maximumFractionDigits: 0 })}°F</div>
             <div class="text-xl p-6">Feels like: {feelsLike.toLocaleString(undefined, { maximumFractionDigits: 0 })}°F</div>
+            <div class="text-xl p-6">{counter}</div>
         </div>
     </div>
 </BaseWidget>
