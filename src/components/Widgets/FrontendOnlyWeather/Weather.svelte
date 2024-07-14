@@ -4,6 +4,7 @@
     import { type WeatherResponse } from "./WeatherResponse";
     import { onDestroy, onMount } from "svelte";
     import { invoke } from "@tauri-apps/api/core";
+    import { debug } from "@tauri-apps/plugin-log";
 
     const IMAGE_URL_PREFIX = "http://openweathermap.org/img/wn/";
     const IMAGE_URL_SUFFIX = "@4x.png";
@@ -22,6 +23,7 @@
         let response = await fetch(`http://api.openweathermap.org/data/2.5/weather?appid=${apiKey}&q=${city}&units=${units}`);
         
         if (response.ok) {
+            debug(`${response.json()}`);
             return response.json();
         } else {
             dataSuccess = false;
