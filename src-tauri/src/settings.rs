@@ -1,31 +1,25 @@
 use config::{Config, ConfigError, Environment, File};
 use directories_next::ProjectDirs;
-use lazy_static::lazy_static;
 use serde::Deserialize;
 use validator::{Validate, ValidationError};
 
 static MICROSOFT_APP_ID: &'static str = "565467a5-8f81-4e12-8c8d-e6ec0a0c4290";
 
-lazy_static! {
-    pub static ref SETTINGS: Settings = Settings::new()
-        .unwrap_or_else(|e| panic!("Failed to load settings. \n {:?}", e.to_string()));
-}
-
 #[tauri::command(async)]
-pub fn get_setting(module: String, setting: String) -> Result<String, String> {
+pub fn get_setting(module: String, setting: String, settings: tauri::State<'_, Settings>) -> Result<String, String> {
     match format!("{module}.{setting}").as_str() {
-        "to_do_widget.update_interval" => Ok(SETTINGS.to_do_widget.get_update_interval().to_string()),
-        "to_do_widget.show_completed_tasks" => Ok(SETTINGS.to_do_widget.get_show_completed_tasks().to_string()),
-        "to_do_widget.lists_to_use" => Ok(SETTINGS.to_do_widget.get_lists_to_use().join(",")),
-        "to_do_widget.task_sort_order" => Ok(SETTINGS.to_do_widget.get_task_sort_order().join(",")),
-        "to_do_widget.app_id" => Ok(SETTINGS.to_do_widget.get_app_id()),
-        "weather_widget.city_name" => Ok(SETTINGS.weather_widget.get_city_name()),
-        "weather_widget.units" => Ok(SETTINGS.weather_widget.get_units()),
-        "weather_widget.update_interval" => Ok(SETTINGS.weather_widget.get_update_interval().to_string()),
-        "weather_widget.api_key" => Ok(SETTINGS.weather_widget.get_api_key()),
-        "spotify_widget.update_interval" => Ok(SETTINGS.spotify_widget.get_update_interval().to_string()),
-        "spotify_widget.client_id" => Ok(SETTINGS.spotify_widget.get_client_id()),
-        "spotify_widget.client_secret" => Ok(SETTINGS.spotify_widget.get_client_secret()),
+        "to_do_widget.update_interval" => Ok(settings.to_do_widget.get_update_interval().to_string()),
+        "to_do_widget.show_completed_tasks" => Ok(settings.to_do_widget.get_show_completed_tasks().to_string()),
+        "to_do_widget.lists_to_use" => Ok(settings.to_do_widget.get_lists_to_use().join(",")),
+        "to_do_widget.task_sort_order" => Ok(settings.to_do_widget.get_task_sort_order().join(",")),
+        "to_do_widget.app_id" => Ok(settings.to_do_widget.get_app_id()),
+        "weather_widget.city_name" => Ok(settings.weather_widget.get_city_name()),
+        "weather_widget.units" => Ok(settings.weather_widget.get_units()),
+        "weather_widget.update_interval" => Ok(settings.weather_widget.get_update_interval().to_string()),
+        "weather_widget.api_key" => Ok(settings.weather_widget.get_api_key()),
+        "spotify_widget.update_interval" => Ok(settings.spotify_widget.get_update_interval().to_string()),
+        "spotify_widget.client_id" => Ok(settings.spotify_widget.get_client_id()),
+        "spotify_widget.client_secret" => Ok(settings.spotify_widget.get_client_secret()),
         _ => Err("Invalid setting".to_string()),
     }
 }
@@ -178,6 +172,7 @@ impl Settings {
     pub fn new() -> Result<Self, ConfigError> {
         let mut settings_file: Option<String> = None;
         let mut secrets_file: Option<String> = None;
+
 
         if let Some(proj_dirs) = ProjectDirs::from("com", "bennettwendorf", "deskity") {
             match proj_dirs.config_dir().to_str() {

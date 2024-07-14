@@ -1,5 +1,5 @@
 <script lang="ts">
-    import Widget from "../Widget.svelte";
+    import BaseWidget from "../BaseWidget.svelte";
     import { setUpdateCommand } from "../../../utils/timer";
     import { type WeatherResponse } from "./WeatherResponse";
     import { onDestroy, onMount } from "svelte";
@@ -54,7 +54,7 @@
                 feelsLike = response.main.feels_like;
                 icon = response.weather[0].icon;
             }
-        })
+        });
     });
 
     onDestroy(() => {
@@ -62,13 +62,13 @@
     });
 </script>
 
-<Widget error={!dataSuccess} errorMessage={errorMessage}>
+<BaseWidget error={!dataSuccess} errorMessage={errorMessage}>
     <div class="flex flex-row justify-center text-center my-auto h-full">
         <img src="{IMAGE_URL_PREFIX + (icon ?? "02d") + IMAGE_URL_SUFFIX}" alt="Temp weather info" class="h-24 m-auto">
 
         <div class="flex flex-col justify-center m-auto">
-            <div class="text-5xl p-6">{temp.toLocaleString(undefined, { maximumFractionDigits: 0 })}°F</div>
+            <div class="text-5xl p-6">{temp.toLocaleString(undefined, { maximumFractionDigits: 0 })}°C</div>
             <div class="text-xl p-6">Feels like: {feelsLike.toLocaleString(undefined, { maximumFractionDigits: 0 })}°F</div>
         </div>
     </div>
-</Widget>
+</BaseWidget>
